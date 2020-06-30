@@ -4,6 +4,17 @@ import yaml
 
 
 def load_config(config_file, environment, region, template, parameters):
+    """
+    Build hierarchy of configurations by loading multi-document config file.
+    There must be a matching config for the environment name and region.
+    :param str config_file: Path to config file
+    :param str environment: Environment being updated
+    :param str region: Region for the Stack
+    :param str template: Override value for Template from command line
+    :param list parameters: Override values for Parameters from the command line
+    :return: Top of Config hierarchy
+    :raises validationException: If config file not found, matching environment not found in config or config is invalid
+    """
     arg_config = create_arg_config(environment, region, template, parameters)
 
     try:
@@ -32,6 +43,15 @@ def load_config(config_file, environment, region, template, parameters):
 
 
 def create_arg_config(environment, region, template, parameters):
+    """
+    Create a Configuration from the command line arguments, used as top of hierarchy to
+    optionally override template and parameters.
+    :param str environment: Environment
+    :param str region: Region to deploy
+    :param str template: Override value for Template from command line
+    :param list parameters: Override values for Parameters from the command line
+    :return: Argument Config
+    """
     raw_config = {
         'Environment': environment,
         'Region': region

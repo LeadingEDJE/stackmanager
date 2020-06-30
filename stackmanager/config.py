@@ -4,8 +4,21 @@ from jinja2 import Template
 
 
 class Config:
+    """
+    Encapsulates Configuration for one of the following:
+    - base "all" Environment from which other environments can inherit values
+    - environment identified by Environment name and Region
+    - arguments that override values from command line
+    If a parent is defined, values from the parent Config act as a default,
+    and are merged for parameters and tags.
+    """
 
     def __init__(self, config):
+        """
+        Initialize Configuration
+        :param dict config: Raw Configuration dictionary
+        :raises ValidationError: if Environment or Region is missing when required
+        """
         self.parent = None
         self.config = config
         self.environment = config.get('Environment')
@@ -19,16 +32,37 @@ class Config:
 
     @classmethod
     def is_all(cls, environment):
+        """
+        Is this environment name the base all environment
+        :param str environment: Environment name
+        :return: True if name is all
+        """
         return environment == 'all'
 
     @classmethod
     def is_template_url(cls, template):
+        """
+        Is the template value a URL (starting with https://) or not
+        :param str template: Template path or URL
+        :return: True if this is a URL
+        """
         return template.startswith('https://')
 
     def set_parent(self, parent):
+        """
+        Set the parent Config
+        :param Config parent: Parent Config
+        """
         self.parent = parent
 
     def __get_value(self, name, required=False):
+        """
+        Get value, checking parent if not set
+        :param str name: Name of value in raw config
+        :param bool required: Is the value required
+        :return: Value for name
+        :raises ValidationError: If a required value is not available
+        """
         value = self.config.get(name)
         if not value and self.parent:
             value = self.parent.__get_value(name)
@@ -39,6 +73,12 @@ class Config:
         return value
 
     def __get_list(self, name, default=[]):
+        """
+        Get list of values, checking parent if not set
+        :param str name: Name of value in raw config
+        :param list default: Default to return if not set
+        :return: Value or default
+        """
         values = self.config.get(name)
         if not values and self.parent:
             values = self.parent.__get_list(name, None)
@@ -46,6 +86,12 @@ class Config:
         return values if values else default
 
     def __get_dict(self, name):
+        """
+        Get dictionary of values, merging with parent values if available.
+        Values from the parent are overwritten if redefined in the child Config
+        :param str name: Name of dictionary of values
+        :return: Merged values, or empty dictionary
+        """
         copy = None
         values = self.config.get(name, {})
         if self.parent:
@@ -55,6 +101,12 @@ class Config:
         return copy if copy else values
 
     def __template_all(self, values):
+        """
+        Process dictionary, evaluating all values using Jinja2 templates using
+        the Environment and Region as replacement values
+        :param dict values: Dictionary to template
+        :return: Updated dictionary
+        """
         for k, v in values.items():
             template = Template(v, optimized=False)
             values[k] = template.render(Environment=self.environment, Region=self.region)
@@ -62,27 +114,53 @@ class Config:
 
     @property
     def stack_name(self):
+        """
+        Get Stack Name required property
+        :return: Stack name, evaluated as a Jinja2 template
+        """
         template = Template(self.__get_value('StackName', True))
         return template.render(Environment=self.environment, Region=self.region)
 
     @property
     def template(self):
+        """
+        Get Template required property
+        :return: Template path or URL
+        """
         return self.__get_value('Template', True)
 
     @property
     def parameters(self):
+        """
+        Get Parameters dictionary, merging values from parent Configs
+        and substituting any templated values
+        :return: Parameters dictionary
+        """
         return self.__template_all(self.__get_dict('Parameters'))
 
     @property
     def tags(self):
+        """
+        Get Tags dictionary, merging values from parent Configs
+        and substituting any templated values
+        :return: Tags dictionary
+        """
         return self.__template_all(self.__get_dict('Tags'))
 
     @property
     def capabilities(self):
+        """
+        Get list of capabilities
+        :return: Capabilities
+        """
         return self.__get_list('Capabilities')
 
     def validate(self):
-        """Check that we have all the required values for a minimal stack"""
+        """
+        Validate that required values are available,
+        and if the template is not a URL that it exists on the filesystem
+        :raises ValidationError: If Config is not valid
+        """
         if not self.stack_name:
             raise ValidationError('StackName not set')
         if not self.template:
