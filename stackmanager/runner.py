@@ -1,4 +1,5 @@
 import boto3
+import os
 import uuid
 from botocore.exceptions import ClientError, WaiterError
 from stackmanager.config import Config
@@ -218,6 +219,21 @@ class Runner:
         return [({'Key': k, 'Value': v}) for k, v in self.config.tags.items()]
 
 
+class AzureDevOpsRunner(Runner):
+    """
+    Subclass of Runner with extra functionality for Azure DevOps
+    """
+    def pending_change_set(self):
+        """
+        Set Azure DevOps variable called change_set_name or the value of the CHANGE_SET_VARIABLE environment
+        variable if set
+        """
+        super().pending_change_set()
+
+        variable_name = os.environ.get('CHANGE_SET_VARIABLE', 'change_set_name')
+        print(f'##vso[task.setvariable variable={variable_name};isOutput=true]{self.change_set_name}')
+
+
 def create_runner(profile, config, change_set_name, auto_approve):
     """
     Factory method for runner, responsible for creating boto3 client and picking appropriate Runner implementation.
@@ -228,4 +244,9 @@ def create_runner(profile, config, change_set_name, auto_approve):
     :return: Runner instance
     """
     session = boto3.Session(profile_name=profile, region_name=config.region)
-    return Runner(session.client('cloudformation'), config, change_set_name, auto_approve)
+    client = session.client('cloudformation')
+    azure_devops = 'SYSTEM_TEAMPROJECTID' in os.environ
+    if azure_devops:
+        return AzureDevOpsRunner(client, config, change_set_name, auto_approve)
+    else:
+        return Runner(client, config, change_set_name, auto_approve)
