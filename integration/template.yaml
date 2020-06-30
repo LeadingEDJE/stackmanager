@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion : "2010-09-09"
+Description: StackManager test template that creates an SQS queue
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+
+Resources:
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub StackManager-${Environment}
+      VisibilityTimeout: 30
+
+Outputs:
+  QueueUrl:
+    Description: QueueUrl
+    Value: !Ref Queue

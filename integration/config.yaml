@@ -1,0 +1,12 @@
+---
+Environment: all
+StackName: "{{ Environment }}-StackManager-Integration"
+Parameters:
+  Environment: "{{ Environment }}"
+Tags:
+  Application: StackManager
+  Environment: "{{ Environment }}"
+Template: integration/template.yaml
+---
+Environment: dev
+Region: us-east-1

@@ -1,0 +1,36 @@
+---
+Environment: all
+StackName: "{{ Environment }}-ExampleStack"
+Parameters:
+  Environment: "{{ Environment }}"
+  SSMKey: "/Company/{{ Environment }}/{{ Region }}/Key"
+Tags:
+  Application: Example
+  Environment: "{{ Environment }}"
+Template: integration/template.yaml
+Capabilities:
+  - CAPABILITY_NAMED_IAM
+---
+Environment: dev
+Region: us-east-1
+Parameters:
+  Domain: dev.example.com
+  KeyId: guid1
+---
+Environment: dev
+Region: us-east-2
+Parameters:
+  Domain: dev.example.com
+  KeyId: guid2
+---
+Environment: prod
+Region: us-east-1
+Parameters:
+  Domain: prod.example.com
+  KeyId: guid3
+---
+Environment: prod
+Region: us-east-2
+Parameters:
+  Domain: prod.example.com
+  KeyId: guid4
