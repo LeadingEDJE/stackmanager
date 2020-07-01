@@ -3,8 +3,9 @@ import os
 import uuid
 from botocore.exceptions import ClientError, WaiterError
 from stackmanager.config import Config
-from stackmanager.messages import info, warn, error
 from stackmanager.exceptions import StackError, ValidationError
+from stackmanager.messages import info, warn, error
+from stackmanager.status import StackStatus
 from tabulate import tabulate
 
 
@@ -34,8 +35,11 @@ class Runner:
         """
         try:
             stacks = self.client.describe_stacks(StackName=self.config.stack_name)['Stacks']
-            return stacks[0]
+            stack = stacks[0]
+            info(f'\nStack: {self.config.stack_name}, Status: {StackStatus.get_status(stack).name}')
+            return stack
         except ClientError:
+            info(f'\nStack: {self.config.stack_name}, Status: does not exist')
             return None
 
     def deploy(self):
@@ -46,6 +50,15 @@ class Runner:
         If there are no changes in the ChangeSet it will be automatically deleted.
         :raises StackError: If creating the ChangeSet or executing it fails
         """
+        if not StackStatus.is_creatable(self.stack) and not StackStatus.is_updatable(self.stack):
+            stack_status = StackStatus.get_status(self.stack)
+            if stack_status == StackStatus.ROLLBACK_COMPLETE:
+                warn(f'Deleting Stack {self.config.stack_name} in ROLLBACK_COMPLETE status before attempting to create')
+                self.delete()
+            else:
+                raise ValidationError(f'Stack {self.config.stack_name} is not in a deployable status: '
+                                      f'{stack_status.name}')
+
         info(f'\nCreating ChangeSet {self.change_set_name}\n')
         try:
             self.client.create_change_set(**self.build_change_set_args())
@@ -113,9 +126,9 @@ class Runner:
 
             self.client.execute_change_set(ChangeSetName=self.change_set_name, StackName=self.config.stack_name)
 
-            self.client.get_waiter('stack_update_complete' if self.stack else 'stack_create_complete').wait(
-                StackName=self.config.stack_name,
-                WaiterConfig={'Delay': 10, 'MaxAttempts': 360})
+            waiter_name = 'stack_create_complete' if StackStatus.is_creatable(self.stack) else 'stack_update_complete'
+            self.client.get_waiter(waiter_name).wait(StackName=self.config.stack_name,
+                                                     WaiterConfig={'Delay': 10, 'MaxAttempts': 360})
 
             info(f'\nChangeSet {self.change_set_name} for {self.config.stack_name} successfully completed:\n')
             self.print_events(last_timestamp)
@@ -127,7 +140,7 @@ class Runner:
             self.print_events(last_timestamp)
             raise StackError(we)
 
-    def delete(self, retain_resources):
+    def delete(self, retain_resources=[]):
         """
         Delete a Stack, optionally retraining certain resources.
         Waits for Stack to delete and prints Events if deletion fails
@@ -136,6 +149,9 @@ class Runner:
         """
         if not self.stack:
             raise ValidationError(f'Stack {self.config.stack_name} not found')
+        if not StackStatus.is_deletable(self.stack):
+            raise ValidationError(f'Stack {self.config.stack_name} is not in a deletable status: '
+                                  f'{StackStatus.get_status(self.stack).name}')
 
         info(f'\nDeleting Stack {self.config.stack_name}')
         last_timestamp = self.get_last_timestamp()
@@ -148,6 +164,7 @@ class Runner:
                 WaiterConfig={'Delay': 10, 'MaxAttempts': 360})
 
             info(f'\nDeletion of Stack {self.config.stack_name} successfully completed')
+            self.stack = None
         except ClientError as ce:
             raise StackError(ce)
         except WaiterError as we:
@@ -189,7 +206,7 @@ class Runner:
         args = {
             'StackName': self.config.stack_name,
             'ChangeSetName': self.change_set_name,
-            'ChangeSetType': 'UPDATE' if self.stack else 'CREATE',
+            'ChangeSetType': 'CREATE' if StackStatus.is_creatable(self.stack) else 'UPDATE',
             'Parameters': self.build_parameters(),
             'Tags': self.build_tags()
         }
