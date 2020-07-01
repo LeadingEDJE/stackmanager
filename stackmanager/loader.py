@@ -3,7 +3,7 @@ from stackmanager.config import Config
 import yaml
 
 
-def load_config(config_file, environment, region, template, parameters):
+def load_config(config_file, environment, region, template, parameters, check_template=True):
     """
     Build hierarchy of configurations by loading multi-document config file.
     There must be a matching config for the environment name and region.
@@ -12,6 +12,7 @@ def load_config(config_file, environment, region, template, parameters):
     :param str region: Region for the Stack
     :param str template: Override value for Template from command line
     :param list parameters: Override values for Parameters from the command line
+    :param bool check_template: Check Template exists when validating config
     :return: Top of Config hierarchy
     :raises validationException: If config file not found, matching environment not found in config or config is invalid
     """
@@ -36,7 +37,7 @@ def load_config(config_file, environment, region, template, parameters):
             arg_config.set_parent(env_config)
 
             # Validate before returning
-            arg_config.validate()
+            arg_config.validate(check_template)
             return arg_config
     except FileNotFoundError:
         raise ValidationError(f'Config file {config_file} not found')

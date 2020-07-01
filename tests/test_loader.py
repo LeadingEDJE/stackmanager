@@ -9,7 +9,7 @@ def config_file(filename='config.yaml'):
 
 
 def test_loader_dev():
-    config = load_config(config_file(), 'dev', 'us-east-1', None, None)
+    config = load_config(config_file(), 'dev', 'us-east-1', None, None, False)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
@@ -28,7 +28,7 @@ def test_loader_dev():
 
 
 def test_loader_prod():
-    config = load_config(config_file(), 'prod', 'us-east-2', None, None)
+    config = load_config(config_file(), 'prod', 'us-east-2', None, None, False)
 
     assert config.environment == 'prod'
     assert config.region == 'us-east-2'
@@ -52,7 +52,7 @@ def test_loader_dev_overrides():
         ('Domain', 'notdev.example.com'),
         ('Extra', 'OverrideDefault')
     ]
-    config = load_config(config_file(), 'dev', 'us-east-1', 'integration/config.yaml', override_parameters)
+    config = load_config(config_file(), 'dev', 'us-east-1', 'integration/config.yaml', override_parameters, False)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
