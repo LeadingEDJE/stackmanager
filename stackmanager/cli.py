@@ -49,7 +49,7 @@ def apply(ctx, profile, config, environment, region, change_set_name):
     Apply a CloudFormation ChangeSet to create or update a CloudFormation stack.
     """
     try:
-        cfg = load_config(config, environment, region, None, None)
+        cfg = load_config(config, environment, region, None, None, False)
         runner = create_runner(profile, cfg, change_set_name, False)
         runner.execute_change_set()
     except (ValidationError, StackError) as e:
@@ -68,7 +68,7 @@ def delete(ctx, profile, config, environment, region, retain_resources):
     Delete a CloudFormation stack.
     """
     try:
-        cfg = load_config(config, environment, region, None, None)
+        cfg = load_config(config, environment, region, None, None, False)
         runner = create_runner(profile, cfg, None, False)
         runner.delete(retain_resources)
     except (ValidationError, StackError) as e:

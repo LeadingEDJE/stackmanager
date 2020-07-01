@@ -1,5 +1,6 @@
 import pytest
 from stackmanager.config import Config
+from stackmanager.exceptions import ValidationError
 
 
 @pytest.fixture
@@ -105,3 +106,52 @@ def test_tags_dev(dev_config):
     }
 
 
+def test_validate_config_with_template_file():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'StackName': 'Name',
+        # Uses this file as the template file as it's just an exists check
+        'Template': __file__
+    })
+    config.validate(check_template=True)
+
+
+def test_validate_config_with_template_url():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'StackName': 'Name',
+        'Template': 'https://s3.amazonaws.com/notarealurl'
+    })
+    config.validate(check_template=True)
+
+
+def test_validate_config_missing_stack_name():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1'
+    })
+    with pytest.raises(ValidationError, match='StackName not set'):
+        config.validate(check_template=False)
+
+
+def test_validate_config_missing_template():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'StackName': 'Name'
+    })
+    with pytest.raises(ValidationError, match='Template not set'):
+        config.validate(check_template=True)
+
+
+def test_validate_config_missing_template_file():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'StackName': 'Name',
+        'Template': 'notfound.yaml'
+    })
+    with pytest.raises(ValidationError, match='Template notfound.yaml not found'):
+        config.validate(check_template=True)

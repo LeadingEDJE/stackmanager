@@ -155,17 +155,17 @@ class Config:
         """
         return self.__get_list('Capabilities')
 
-    def validate(self):
+    def validate(self, check_template=True):
         """
         Validate that required values are available,
         and if the template is not a URL that it exists on the filesystem
+        :param bool check_template: If True and template is not URL, check on filesystem
         :raises ValidationError: If Config is not valid
         """
         if not self.stack_name:
             raise ValidationError('StackName not set')
-        if not self.template:
+        if check_template and not self.template:
             raise ValidationError('Template not set')
-
-        if not Config.is_template_url(self.template):
+        if check_template and not Config.is_template_url(self.template):
             if not os.path.isfile(self.template):
                 raise ValidationError(f'Template {self.template} not found')
