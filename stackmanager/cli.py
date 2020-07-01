@@ -9,6 +9,9 @@ from stackmanager.runner import create_runner
 @click.group(chain=True)
 @click.pass_context
 def cli(ctx):
+    """
+    Utility for managing CloudFormation stacks.
+    """
     ctx.obj = dict()
 
 
@@ -20,9 +23,12 @@ def cli(ctx):
 @click.option('-r', '--region', required=True, help='AWS Region to deploy')
 @click.option('-t', '--template', help='Override template')
 @click.option('--parameter', nargs=2, multiple=True, help='Override a parameter, can be specified multiple times')
-@click.option('--change-set-name', help='Custom change set name')
-@click.option('--auto-approve', is_flag=True, help='Auto approve change set')
+@click.option('--change-set-name', help='Custom ChangeSet name')
+@click.option('--auto-approve', is_flag=True, help='Auto approve ChangeSet')
 def deploy(ctx, profile, config, environment, region, template, parameter, change_set_name, auto_approve):
+    """
+    Create or update a CloudFormation stack using ChangeSets.
+    """
     try:
         cfg = load_config(config, environment, region, template, parameter)
         runner = create_runner(profile, cfg, change_set_name, auto_approve)
@@ -37,8 +43,11 @@ def deploy(ctx, profile, config, environment, region, template, parameter, chang
 @click.option('-c', '--config', required=True, help='YAML Configuration file')
 @click.option('-e', '--environment', required=True, help='Environment to deploy')
 @click.option('-r', '--region', required=True, help='AWS Region to deploy')
-@click.option('--change-set-name', help='Custom change set name')
+@click.option('--change-set-name', required=True, help='ChangeSet to apply')
 def apply(ctx, profile, config, environment, region, change_set_name):
+    """
+    Apply a CloudFormation ChangeSet to create or update a CloudFormation stack.
+    """
     try:
         cfg = load_config(config, environment, region, None, None)
         runner = create_runner(profile, cfg, change_set_name, False)
@@ -55,6 +64,9 @@ def apply(ctx, profile, config, environment, region, change_set_name):
 @click.option('-r', '--region', required=True, help='AWS Region to deploy')
 @click.option('--retain-resources', multiple=True, help='Logical Ids of resources to retain')
 def delete(ctx, profile, config, environment, region, retain_resources):
+    """
+    Delete a CloudFormation stack.
+    """
     try:
         cfg = load_config(config, environment, region, None, None)
         runner = create_runner(profile, cfg, None, False)

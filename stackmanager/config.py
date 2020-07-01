@@ -108,7 +108,7 @@ class Config:
         :return: Updated dictionary
         """
         for k, v in values.items():
-            template = Template(v, optimized=False)
+            template = Template(str(v), optimized=False)
             values[k] = template.render(Environment=self.environment, Region=self.region)
         return values
 

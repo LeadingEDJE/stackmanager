@@ -34,7 +34,10 @@ def dev_config(all_config):
         },
         'Capabilities': [
             'CAPABILITIES_NAMED_IAM'
-        ]
+        ],
+        'Tags': {
+            'CostCenter': 200
+        }
     })
     config.set_parent(all_config)
     return config
@@ -97,7 +100,8 @@ def test_tags_all(all_config):
 def test_tags_dev(dev_config):
     assert dev_config.tags == {
         'Team': 'Ops',
-        'TestFunction': 'ue1'
+        'TestFunction': 'ue1',
+        'CostCenter': '200'
     }
 
 

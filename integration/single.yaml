@@ -1,0 +1,10 @@
+Environment: dev
+StackName: "{{ Environment }}-StackManager-Integration"
+Region: us-east-1
+Parameters:
+  Environment: "{{ Environment }}"
+Tags:
+  Application: StackManager
+  Environment: "{{ Environment }}"
+  CostCenter: 200
+Template: integration/template.yaml
