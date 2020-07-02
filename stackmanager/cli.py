@@ -24,14 +24,14 @@ def cli(ctx):
 @click.option('-t', '--template', help='Override template')
 @click.option('--parameter', nargs=2, multiple=True, help='Override a parameter, can be specified multiple times')
 @click.option('--change-set-name', help='Custom ChangeSet name')
-@click.option('--auto-approve', is_flag=True, help='Auto approve ChangeSet')
-def deploy(ctx, profile, config, environment, region, template, parameter, change_set_name, auto_approve):
+@click.option('--auto-apply', is_flag=True, help='Automatically apply created ChangeSet')
+def deploy(ctx, profile, config, environment, region, template, parameter, change_set_name, auto_apply):
     """
     Create or update a CloudFormation stack using ChangeSets.
     """
     try:
         cfg = load_config(config, environment, region, template, parameter)
-        runner = create_runner(profile, cfg, change_set_name, auto_approve)
+        runner = create_runner(profile, cfg, change_set_name, auto_apply)
         runner.deploy()
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
