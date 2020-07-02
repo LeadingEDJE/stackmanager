@@ -1,5 +1,7 @@
 # Stack-Manager
 
+[![PyPI version](https://badge.fury.io/py/stackmanager.svg)](https://badge.fury.io/py/stackmanager)
+
 Utility to manage CloudFormation stacks based upon a Template (either local or in S3) and a YAML configuration file.
 
 Uses ChangeSets to create or update CloudFormation stacks, allowing the ChangeSets to either be automatically
@@ -79,4 +81,100 @@ to repeat values.
 
 > Because of the special handling of the `all` Environment, it's not possible to deploy an environment named `all`.
 
+### Supported Configuration Values
 
+|Name|Required|Templated|Notes|
+|:---|:------:|:-------:|:----|
+|Environment|Yes|No|Name of environment to be deployed|
+|Region|Yes|No|AWS region (e.g. us-east-1) - not required for the 'all' environment|
+|Parameters|No|Yes|Each parameter value is templated, and parameters are inherited from 'all'|
+|Tags|No|Yes|Each tag value is templated, and tags are inherited from 'all'|
+|Capabilities|No|No|List of capabilities (e.g. CAPABILITY_IAM)
+|Template|No|No|Can be supplied on command line, so not required in configuration
+
+## Usage
+
+Stackmanager has the following commands:
+
+* `deploy` - Create or update a CloudFormation stack for a specific environment/region using a ChangeSet. By default exits after creating the changeset, but can `--auto-apply`.
+* `apply` - Apply a previously created ChangeSet
+* `delete` - Delete an existing CloudFormation stack
+
+### deploy
+
+```
+Usage: stackmanager deploy [OPTIONS]
+
+  Create or update a CloudFormation stack using ChangeSets.
+
+Options:
+  -p, --profile TEXT      AWS Profile, will use default or environment
+                          variables if not specified
+
+  -c, --config TEXT       YAML Configuration file  [required]
+  -e, --environment TEXT  Environment to deploy  [required]
+  -r, --region TEXT       AWS Region to deploy  [required]
+  -t, --template TEXT     Override template
+  --parameter TEXT...     Override a parameter, can be specified multiple
+                          times
+
+  --change-set-name TEXT  Custom ChangeSet name
+  --auto-apply            Automatically apply created ChangeSet
+  --help                  Show this message and exit.
+```
+
+### apply
+
+```
+Usage: stackmanager apply [OPTIONS]
+
+  Apply a CloudFormation ChangeSet to create or update a CloudFormation
+  stack.
+
+Options:
+  -p, --profile TEXT      AWS Profile, will use default or environment
+                          variables if not specified
+
+  -c, --config TEXT       YAML Configuration file  [required]
+  -e, --environment TEXT  Environment to deploy  [required]
+  -r, --region TEXT       AWS Region to deploy  [required]
+  --change-set-name TEXT  ChangeSet to apply  [required]
+  --help                  Show this message and exit.
+```
+
+### delete
+
+```
+Usage: stackmanager delete [OPTIONS]
+
+  Delete a CloudFormation stack.
+
+Options:
+  -p, --profile TEXT       AWS Profile, will use default or environment
+                           variables if not specified
+
+  -c, --config TEXT        YAML Configuration file  [required]
+  -e, --environment TEXT   Environment to deploy  [required]
+  -r, --region TEXT        AWS Region to deploy  [required]
+  --retain-resources TEXT  Logical Ids of resources to retain
+  --help                   Show this message and exit.
+```
+
+## CI/CD Pipeline support
+
+### Azure DevOps
+
+Stackmanager will automatically detect when it is running in an Azure DevOps pipeline by looking for the 
+`SYSTEM_TEAMPROJECTID` environment variable.
+
+It will print `##vso` strings under the following circumstances:
+
+* `deploy` has created a ChangeSet and it has not been auto-applied: \
+  This sets a variable named `change_set_name` containing the `change_set_name` that can be used with the `apply` 
+  command in a later step/job/stage.\
+  The name of the variable can be overridden by setting the `CHANGE_SET_VARIABLE` environment variable.
+* `deploy` has created a ChangeSet but it contains no changes: \
+   This logs a warning (`##vso[task.logissue]`) and sets the status to `SucceededWithIssues` (`##vso[task.complete]`)
+   allowing following steps/jobs/stages to be skipped by checking for the `SucceededStatus` in a condition.
+* `deploy` or `apply` fails when applying a ChangeSet: \
+   This logs an error (`##vso[task.logissue]`)

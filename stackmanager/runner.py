@@ -14,18 +14,18 @@ class Runner:
     Encapsulates calls to CloudFormation client to create, update and delete stacks
     """
 
-    def __init__(self, client, config, change_set_name, auto_approve):
+    def __init__(self, client, config, change_set_name, auto_apply):
         """
         Initialize new instance
         :param client: CloudFormation client
         :param Config config: Parsed configuration
         :param str change_set_name: ChangeSet name to use, if not set a guid will be generated
-        :param bool auto_approve: Whether to auto-approve changes
+        :param bool auto_apply: Whether to automatically apply changes
         """
         self.client = client
         self.config = config
         self.change_set_name = change_set_name if change_set_name else 'c'+str(uuid.uuid4()).replace('-', '')
-        self.auto_approve = auto_approve
+        self.auto_apply = auto_apply
         self.stack = self.load_stack()
 
     def load_stack(self):
@@ -63,7 +63,7 @@ class Runner:
         try:
             self.client.create_change_set(**self.build_change_set_args())
             if self.wait_for_change_set():
-                if self.auto_approve:
+                if self.auto_apply:
                     self.execute_change_set()
                 else:
                     self.pending_change_set()
@@ -282,19 +282,19 @@ class AzureDevOpsRunner(Runner):
               f'({self.config.environment}/{self.config.region}) - ChangeSet {self.change_set_name} failed')
 
 
-def create_runner(profile, config, change_set_name, auto_approve):
+def create_runner(profile, config, change_set_name, auto_apply):
     """
     Factory method for runner, responsible for creating boto3 client and picking appropriate Runner implementation.
     :param str profile: AWS Profile from command line
     :param Config config: Parsed Configuration
     :param str change_set_name: Name of ChangeSet to use
-    :param bool auto_approve: Whether to auto-approve changes
+    :param bool auto_apply: Whether to automatically apply changes
     :return: Runner instance
     """
     session = boto3.Session(profile_name=profile, region_name=config.region)
     client = session.client('cloudformation')
     azure_devops = 'SYSTEM_TEAMPROJECTID' in os.environ
     if azure_devops:
-        return AzureDevOpsRunner(client, config, change_set_name, auto_approve)
+        return AzureDevOpsRunner(client, config, change_set_name, auto_apply)
     else:
-        return Runner(client, config, change_set_name, auto_approve)
+        return Runner(client, config, change_set_name, auto_apply)

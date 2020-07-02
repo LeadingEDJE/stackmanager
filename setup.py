@@ -5,11 +5,12 @@ with open('README.md', 'r') as t:
 
 setup(
     name='stackmanager',
-    version='0.3.4',
+    version='0.4',
     description='Utility to manage CloudFormation stacks using YAML configuration file',
     long_description=README,
     long_description_content_type='text/markdown',
     url='https://github.com/LeadingEDJE/stackmanager',
+    author='Andrew May',
     packages=['stackmanager'],
     install_requires=[
         'Click',
