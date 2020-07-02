@@ -35,6 +35,7 @@ def deploy(ctx, profile, config, environment, region, template, parameter, chang
         runner.deploy()
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
+        exit(1)
 
 
 @cli.command()
@@ -54,6 +55,7 @@ def apply(ctx, profile, config, environment, region, change_set_name):
         runner.execute_change_set()
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
+        exit(1)
 
 
 @cli.command()
@@ -73,6 +75,7 @@ def delete(ctx, profile, config, environment, region, retain_resources):
         runner.delete(retain_resources)
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
+        exit(1)
 
 
 if __name__ == '__main__':

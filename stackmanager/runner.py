@@ -136,9 +136,16 @@ class Runner:
         except ClientError as ce:
             raise StackError(ce)
         except WaiterError as we:
-            error(f'\nChangeSet {self.change_set_name} for {self.config.stack_name} failed:\n')
-            self.print_events(last_timestamp)
+            self.failed_change_set(last_timestamp)
             raise StackError(we)
+
+    def failed_change_set(self, last_timestamp):
+        """
+        Print Stack Events on failed change set.
+        Subclasses can override this to output errors in a different format.
+        """
+        error(f'\nChangeSet {self.change_set_name} for {self.config.stack_name} failed:\n')
+        self.print_events(last_timestamp)
 
     def delete(self, retain_resources=[]):
         """
@@ -240,6 +247,20 @@ class AzureDevOpsRunner(Runner):
     """
     Subclass of Runner with extra functionality for Azure DevOps
     """
+
+    def wait_for_change_set(self):
+        """
+        Override to log a result of SucceededWithIssues if no changes in ChangeSet
+        :return: True if change set created, False if no changes
+        """
+        if super().wait_for_change_set():
+            return True
+
+        print(f'##vso[task.logissue type=warning]{self.config.stack_name} '
+              f'({self.config.environment}/{self.config.region}) - No Changes found in ChangeSet')
+        print('##vso[task.complete result=SucceededWithIssues]DONE')
+        return False
+
     def pending_change_set(self):
         """
         Set Azure DevOps variable called change_set_name or the value of the CHANGE_SET_VARIABLE environment
@@ -247,8 +268,18 @@ class AzureDevOpsRunner(Runner):
         """
         super().pending_change_set()
 
-        variable_name = os.environ.get('CHANGE_SET_VARIABLE', 'change_set_name')
-        print(f'##vso[task.setvariable variable={variable_name};isOutput=true]{self.change_set_name}')
+        change_set_name_variable = os.environ.get('CHANGE_SET_VARIABLE', 'change_set_name')
+        print(f'##vso[task.setvariable variable={change_set_name_variable};isOutput=true]{self.change_set_name}')
+
+    def failed_change_set(self, last_timestamp):
+        """
+        Override to log a task issue that the ChangeSet failed
+        :param str last_timestamp: Timestamp of last change
+        """
+        super().failed_change_set(last_timestamp)
+
+        print(f'##vso[task.logissue type=error]{self.config.stack_name} '
+              f'({self.config.environment}/{self.config.region}) - ChangeSet {self.change_set_name} failed')
 
 
 def create_runner(profile, config, change_set_name, auto_approve):
