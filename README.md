@@ -99,6 +99,7 @@ Stackmanager has the following commands:
 * `deploy` - Create or update a CloudFormation stack for a specific environment/region using a ChangeSet. By default exits after creating the changeset, but can `--auto-apply`.
 * `apply` - Apply a previously created ChangeSet
 * `delete` - Delete an existing CloudFormation stack
+* `upload` - Uploads a local file to S3. Utility method to prevent the need to use the AWS CLI or other tools.
 
 ### deploy
 
@@ -158,6 +159,25 @@ Options:
   -r, --region TEXT        AWS Region to deploy  [required]
   --retain-resources TEXT  Logical Ids of resources to retain
   --help                   Show this message and exit.
+```
+
+### Upload
+
+```
+Usage: stackmanager upload [OPTIONS]
+
+  Uploads a File to S3. This might be a large CloudFormation template, or a
+  Lambda zip file
+
+Options:
+  -p, --profile TEXT   AWS Profile, will use default or environment variables
+                       if not specified
+
+  -r, --region TEXT    AWS Region to upload to  [required]
+  -f, --filename TEXT  File to upload  [required]
+  -b, --bucket TEXT    Bucket to upload to  [required]
+  -k, --key TEXT       Key to upload to  [required]
+  --help               Show this message and exit.
 ```
 
 ## CI/CD Pipeline support

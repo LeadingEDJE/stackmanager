@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import click
-from stackmanager.exceptions import StackError, ValidationError
+from stackmanager.exceptions import StackError, TransferError, ValidationError
 from stackmanager.loader import load_config
 from stackmanager.messages import error
 from stackmanager.runner import create_runner
+from stackmanager.uploader import create_uploader
 
 
 @click.group(chain=True)
@@ -78,5 +79,25 @@ def delete(ctx, profile, config, environment, region, retain_resources):
         exit(1)
 
 
+@cli.command()
+@click.pass_context
+@click.option('-p', '--profile', help='AWS Profile, will use default or environment variables if not specified')
+@click.option('-r', '--region', required=True, help='AWS Region to upload to')
+@click.option('-f', '--filename', required=True, help='File to upload')
+@click.option('-b', '--bucket', required=True, help='Bucket to upload to')
+@click.option('-k', '--key', required=True, help='Key to upload to')
+def upload(ctx, profile, region, filename, bucket, key):
+    """
+    Uploads a File to S3.
+    This might be a large CloudFormation template, or a Lambda zip file.
+    """
+    try:
+        uploader = create_uploader(profile, region)
+        uploader.upload(filename, bucket, key)
+    except (TransferError, ValidationError) as e:
+        error(f'\nError: {e}')
+        exit(1)
+
+
 if __name__ == '__main__':
-    cli()
+    cli(prog_name='stackmanager')
