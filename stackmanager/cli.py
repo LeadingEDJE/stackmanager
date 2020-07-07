@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import click
-from stackmanager.exceptions import StackError, TransferError, ValidationError
+import stackmanager.packager
+from stackmanager.exceptions import PackagingError, StackError, TransferError, ValidationError
 from stackmanager.loader import load_config
 from stackmanager.messages import error
 from stackmanager.runner import create_runner
@@ -75,6 +76,21 @@ def delete(ctx, profile, config, environment, region, retain_resources):
         runner = create_runner(profile, cfg, None, False)
         runner.delete(retain_resources)
     except (ValidationError, StackError) as e:
+        error(f'\nError: {e}')
+        exit(1)
+
+
+@cli.command(name='build-lambda')
+@click.pass_context
+@click.option('-s', '--source-dir', required=True, help='Source directory')
+@click.option('-o', '--output-dir', required=True, help='Output directory')
+@click.option('--runtime', required=True, help='Lambda Runtime')
+@click.option('--archive-name', help='Override archive name (defaults to source directory name)')
+def build_lambda(ctx, source_dir, output_dir, runtime, archive_name):
+    """Build a Lambda function zip file."""
+    try:
+        stackmanager.packager.build_lambda(source_dir, output_dir, runtime, archive_name)
+    except (PackagingError, ValidationError) as e:
         error(f'\nError: {e}')
         exit(1)
 

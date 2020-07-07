@@ -11,3 +11,8 @@ class StackError(Exception):
 class TransferError(Exception):
     """Exception thrown when there is an AWS Error transferring files to S3"""
     pass
+
+
+class PackagingError(Exception):
+    """Exception thrown when unable to package a Lambda Function"""
+    pass

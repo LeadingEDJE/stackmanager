@@ -12,6 +12,7 @@ pyyaml = "*"
 tabulate = "*"
 click = "*"
 jinja2 = "*"
+aws-lambda-builders = "*"
 
 [requires]
 python_version = "3"
