@@ -5,7 +5,7 @@ with open('README.md', 'r') as t:
 
 setup(
     name='stackmanager',
-    version='0.5',
+    version='0.6',
     description='Utility to manage CloudFormation stacks using YAML configuration file',
     long_description=README,
     long_description_content_type='text/markdown',
@@ -17,7 +17,8 @@ setup(
         'boto3',
         'pyyaml',
         'tabulate',
-        'jinja2'
+        'jinja2',
+        'aws_lambda_builders'
     ],
     entry_points='''
         [console_scripts]

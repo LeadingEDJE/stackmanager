@@ -7,6 +7,10 @@ Utility to manage CloudFormation stacks based upon a Template (either local or i
 Uses ChangeSets to create or update CloudFormation stacks, allowing the ChangeSets to either be automatically
 applied or applied later (e.g. during a later phase of a build pipeline after review of the ChangeSet).
 
+> There are also some utility methods for building a lambda file zip and uploading files to S3.
+> These are to provide some of the AWS SAM CLI functionality while fitting into the workflow and configuration
+> style of stackmanager.
+
 ## Configuration
 
 The configuration file can either be a single YAML document containing the configuration for a stack
@@ -100,6 +104,7 @@ Stackmanager has the following commands:
 * `apply` - Apply a previously created ChangeSet
 * `delete` - Delete an existing CloudFormation stack
 * `upload` - Uploads a local file to S3. Utility method to prevent the need to use the AWS CLI or other tools.
+* `build-lambda` - Build a Lambda zip file using aws-lambda-builders.
 
 ### deploy
 
@@ -109,16 +114,12 @@ Usage: stackmanager deploy [OPTIONS]
   Create or update a CloudFormation stack using ChangeSets.
 
 Options:
-  -p, --profile TEXT      AWS Profile, will use default or environment
-                          variables if not specified
-
+  -p, --profile TEXT       AWS Profile, will use default or environment variables if not specified
   -c, --config TEXT       YAML Configuration file  [required]
   -e, --environment TEXT  Environment to deploy  [required]
   -r, --region TEXT       AWS Region to deploy  [required]
   -t, --template TEXT     Override template
-  --parameter TEXT...     Override a parameter, can be specified multiple
-                          times
-
+  --parameter TEXT...     Override a parameter, can be specified multiple times
   --change-set-name TEXT  Custom ChangeSet name
   --auto-apply            Automatically apply created ChangeSet
   --help                  Show this message and exit.
@@ -133,9 +134,7 @@ Usage: stackmanager apply [OPTIONS]
   stack.
 
 Options:
-  -p, --profile TEXT      AWS Profile, will use default or environment
-                          variables if not specified
-
+  -p, --profile TEXT       AWS Profile, will use default or environment variables if not specified
   -c, --config TEXT       YAML Configuration file  [required]
   -e, --environment TEXT  Environment to deploy  [required]
   -r, --region TEXT       AWS Region to deploy  [required]
@@ -151,9 +150,7 @@ Usage: stackmanager delete [OPTIONS]
   Delete a CloudFormation stack.
 
 Options:
-  -p, --profile TEXT       AWS Profile, will use default or environment
-                           variables if not specified
-
+  -p, --profile TEXT       AWS Profile, will use default or environment variables if not specified
   -c, --config TEXT        YAML Configuration file  [required]
   -e, --environment TEXT   Environment to deploy  [required]
   -r, --region TEXT        AWS Region to deploy  [required]
@@ -170,14 +167,27 @@ Usage: stackmanager upload [OPTIONS]
   Lambda zip file
 
 Options:
-  -p, --profile TEXT   AWS Profile, will use default or environment variables
-                       if not specified
-
+  -p, --profile TEXT   AWS Profile, will use default or environment variables if not specified
   -r, --region TEXT    AWS Region to upload to  [required]
   -f, --filename TEXT  File to upload  [required]
   -b, --bucket TEXT    Bucket to upload to  [required]
   -k, --key TEXT       Key to upload to  [required]
   --help               Show this message and exit.
+```
+
+### Build Lambda
+
+```
+Usage: stackmanager build-lambda [OPTIONS]
+
+  Build a Lambda function zip file.
+
+Options:
+  -s, --source-dir TEXT  Source directory  [required]
+  -o, --output-dir TEXT  Output directory  [required]
+  --runtime TEXT         Lambda Runtime  [required]
+  --archive-name TEXT    Override archive name (defaults to source directory name)
+  --help                 Show this message and exit.
 ```
 
 ## CI/CD Pipeline support
