@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 
 with open('README.md', 'r') as t:
@@ -5,7 +6,7 @@ with open('README.md', 'r') as t:
 
 setup(
     name='stackmanager',
-    version='0.6.1',
+    version=os.environ.get('STACKMANAGER_VERSION', '0.0.0'),
     description='Utility to manage CloudFormation stacks using YAML configuration file',
     long_description=README,
     long_description_content_type='text/markdown',

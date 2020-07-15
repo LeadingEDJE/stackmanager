@@ -9,45 +9,14 @@ from shutil import make_archive
 
 CONFIG = namedtuple('Capability', ['language', 'dependency_manager', 'manifest_name'])
 
-PYTHON_PIP_CONFIG = CONFIG(
-                language='python',
-                dependency_manager='pip',
-                manifest_name='requirements.txt')
-
-NODEJS_NPM_CONFIG = CONFIG(
-                language='nodejs',
-                dependency_manager='npm',
-                manifest_name='package.json')
-
-RUBY_BUNDLER_CONFIG = CONFIG(
-                language='ruby',
-                dependency_manager='bundler',
-                manifest_name='Gemfile')
-
-JAVA_GRADLE_CONFIG = CONFIG(
-                language='java',
-                dependency_manager='gradle',
-                manifest_name='build.gradle')
-
-JAVA_KOTLIN_GRADLE_CONFIG = CONFIG(
-                language='java',
-                dependency_manager='gradle',
-                manifest_name='build.gradle.kts')
-
-JAVA_MAVEN_CONFIG = CONFIG(
-                language='java',
-                dependency_manager='maven',
-                manifest_name='pom.xml')
-
-DOTNET_CLIPACKAGE_CONFIG = CONFIG(
-                language='dotnet',
-                dependency_manager='cli-package',
-                manifest_name='.csproj')
-
-GO_MOD_CONFIG = CONFIG(
-                language='go',
-                dependency_manager='modules',
-                manifest_name='go.mod')
+PYTHON_PIP_CONFIG = CONFIG(language='python', dependency_manager='pip', manifest_name='requirements.txt')
+NODEJS_NPM_CONFIG = CONFIG(language='nodejs', dependency_manager='npm', manifest_name='package.json')
+RUBY_BUNDLER_CONFIG = CONFIG(language='ruby', dependency_manager='bundler', manifest_name='Gemfile')
+JAVA_GRADLE_CONFIG = CONFIG(language='java', dependency_manager='gradle', manifest_name='build.gradle')
+JAVA_KOTLIN_GRADLE_CONFIG = CONFIG(language='java', dependency_manager='gradle', manifest_name='build.gradle.kts')
+JAVA_MAVEN_CONFIG = CONFIG(language='java', dependency_manager='maven', manifest_name='pom.xml')
+DOTNET_CLIPACKAGE_CONFIG = CONFIG(language='dotnet', dependency_manager='cli-package', manifest_name='.csproj')
+GO_MOD_CONFIG = CONFIG(language='go', dependency_manager='modules', manifest_name='go.mod')
 
 RUNTIMES = {
     'python2.7': PYTHON_PIP_CONFIG,
