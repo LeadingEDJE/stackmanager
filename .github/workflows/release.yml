@@ -1,6 +1,6 @@
 name: Release to PyPI
 
-oon:
+on:
   release:
     types: [released]
 
