@@ -59,16 +59,16 @@ class Runner:
 
         info(f'\nCreating ChangeSet {self.change_set_name}\n')
         try:
-            self.client.create_change_set(**self.build_change_set_args())
+            change_set_id = self.client.create_change_set(**self.build_change_set_args())['Id']
             if self.wait_for_change_set():
                 if self.config.auto_apply:
                     self.execute_change_set()
                 else:
-                    self.pending_change_set()
+                    self.pending_change_set(change_set_id)
         except ClientError as ce:
             raise StackError(ce)
 
-    def pending_change_set(self):
+    def pending_change_set(self, change_set_id):
         """Subclasses can override this to export the change set information in another format"""
         info(f'\nChangeSet {self.change_set_name} is ready to run')
 
@@ -259,15 +259,18 @@ class AzureDevOpsRunner(Runner):
         print('##vso[task.complete result=SucceededWithIssues]DONE')
         return False
 
-    def pending_change_set(self):
+    def pending_change_set(self, change_set_id):
         """
-        Set Azure DevOps variable called change_set_name or the value of the CHANGE_SET_VARIABLE environment
-        variable if set
+        Set Azure DevOps variables for ChangeSet Name and ChangeSet Id.
+        ChangeSetName variable defaults to change_set_name, but can be overridden using CHANGE_SET_NAME_VARIABLE.
+        ChangeSetId variable defaults to change_set_id, but can be overridden using CHANGE_SET_ID_VARIABLE.
         """
-        super().pending_change_set()
+        super().pending_change_set(change_set_id)
 
-        change_set_name_variable = os.environ.get('CHANGE_SET_VARIABLE', 'change_set_name')
+        change_set_name_variable = os.environ.get('CHANGE_SET_NAME_VARIABLE', 'change_set_name')
+        change_set_id_variable = os.environ.get('CHANGE_SET_ID_VARIABLE', 'change_set_id')
         print(f'##vso[task.setvariable variable={change_set_name_variable};isOutput=true]{self.change_set_name}')
+        print(f'##vso[task.setvariable variable={change_set_id_variable};isOutput=true]{change_set_id}')
 
     def failed_change_set(self, last_timestamp):
         """
@@ -294,3 +297,28 @@ def create_runner(profile, config):
         return AzureDevOpsRunner(client, config)
     else:
         return Runner(client, config)
+
+
+def create_changeset_runner(profile, region, change_set_id):
+    """
+    Create a runner for processing a changeset using it's id.
+    This first describes the changeset to get the stack name, and then the runner can be created with a dummy config.
+    :param profile: AWS Profile from command line
+    :param region: AWS Region from command line
+    :param change_set_id: Change Set identifier
+    :return: Runner instance
+    """
+    session = boto3.Session(profile_name=profile, region_name=region)
+    client = session.client('cloudformation')
+    try:
+        change_set = client.describe_change_set(ChangeSetName=change_set_id)
+        config = Config({
+            'Environment': 'unknown',
+            'Region': session.region_name,
+            'StackName': change_set['StackName'],
+            'ChangeSetName': change_set['ChangeSetName']
+        })
+        return create_runner(profile, config)
+
+    except client.exceptions.ChangeSetNotFoundException:
+        raise StackError(f'ChangeSet {change_set_id} not found')
