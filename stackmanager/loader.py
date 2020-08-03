@@ -1,5 +1,5 @@
 from .exceptions import ValidationError
-from .config import Config, ENVIRONMENT, REGION, TEMPLATE, PARAMETERS, CHANGE_SET_NAME, CHANGE_SET_ID, AUTO_APPLY
+from .config import Config, ENVIRONMENT, REGION, TEMPLATE, PARAMETERS, CHANGE_SET_NAME, CHANGE_SET_ID, EXISTING_CHANGES, AUTO_APPLY
 import yaml
 
 
@@ -63,6 +63,8 @@ def create_arg_config(environment, region, kwargs):
         raw_config[CHANGE_SET_NAME] = kwargs[CHANGE_SET_NAME]
     if CHANGE_SET_ID in kwargs:
         raw_config[CHANGE_SET_ID] = kwargs[CHANGE_SET_ID]
+    if EXISTING_CHANGES in kwargs:
+        raw_config[EXISTING_CHANGES] = kwargs[EXISTING_CHANGES]
     if AUTO_APPLY in kwargs:
         raw_config[AUTO_APPLY] = kwargs[AUTO_APPLY]
 

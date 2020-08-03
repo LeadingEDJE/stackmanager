@@ -12,6 +12,7 @@ TAGS = 'Tags'
 CAPABILITIES = 'Capabilities'
 CHANGE_SET_NAME = 'ChangeSetName'
 CHANGE_SET_ID = 'ChangeSetId'
+EXISTING_CHANGES = 'ExistingChanges'
 AUTO_APPLY = 'AutoApply'
 
 
@@ -174,6 +175,10 @@ class Config:
     @property
     def change_set_id(self):
         return self.__get_value(CHANGE_SET_ID, False)
+
+    @property
+    def existing_changes(self):
+        return self.__get_value(EXISTING_CHANGES, True)
 
     @property
     def auto_apply(self):

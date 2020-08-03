@@ -26,14 +26,17 @@ def cli(ctx):
 @click.option('-t', '--template', help='Override template')
 @click.option('--parameter', nargs=2, multiple=True, help='Override a parameter, can be specified multiple times')
 @click.option('--change-set-name', help='Custom ChangeSet name')
+@click.option('--existing-changes', type=click.Choice(['ALLOW', 'FAILED_ONLY', 'DISALLOW'], case_sensitive=False),
+              default='ALLOW', help='Whether deployment is allowed when there are existing ChangeSets')
 @click.option('--auto-apply', is_flag=True, help='Automatically apply created ChangeSet')
-def deploy(ctx, profile, config, environment, region, template, parameter, change_set_name, auto_apply):
+def deploy(ctx, profile, config, environment, region, template, parameter, change_set_name, existing_changes,
+           auto_apply):
     """
     Create or update a CloudFormation stack using ChangeSets.
     """
     try:
         cfg = load_config(config, environment, region, Template=template, Parameters=parameter,
-                          ChangeSetName=change_set_name, AutoApply=auto_apply)
+                          ChangeSetName=change_set_name, ExistingChanges=existing_changes, AutoApply=auto_apply)
         runner = create_runner(profile, cfg)
         runner.deploy()
     except (ValidationError, StackError) as e:
@@ -47,13 +50,13 @@ def deploy(ctx, profile, config, environment, region, template, parameter, chang
 @click.option('-c', '--config', help='YAML Configuration file')
 @click.option('-e', '--environment', help='Environment to deploy')
 @click.option('-r', '--region', help='AWS Region to deploy')
-@click.option('--change-set-name', help='ChangeSet to apply')
-@click.option('--change-set-id', help='ChangeSet to apply')
+@click.option('--change-set-name', help='Name of ChangeSet to apply')
+@click.option('--change-set-id', help='Identifier of ChangeSet to apply')
 def apply(ctx, profile, config, environment, region, change_set_name, change_set_id):
     """
     Apply a CloudFormation ChangeSet to create or update a CloudFormation stack.
-    If using --change-set-name then --config and --environment are also required as well as --region.
-    If using --change-set-id then only --region is required.
+    If using --change-set-name then --config --environment are --region are required.
+    If using --change-set-id no other values are required (although --profile and --region may be needed).
     """
     if not change_set_name and not change_set_id:
         raise click.UsageError("Option '--change-set-name' or '--change-set-id' required.")

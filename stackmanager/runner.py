@@ -40,6 +40,26 @@ class Runner:
             info(f'\nStack: {self.config.stack_name}, Status: does not exist')
             return None
 
+    def check_change_sets(self):
+        """
+        Check for existing change sets, and depending upon 'ExistingChanges' setting we may prevent the deployment
+        :raises ValidationError: If ChangeSets exist and are not allowed
+        """
+        if self.stack:
+            change_sets = self.client.list_change_sets(StackName=self.config.stack_name)['Summaries']
+            change_sets.sort(key=lambda c: c['CreationTime'])
+            successful_change_sets = [c for c in change_sets if c['Status'] in ['CREATE_PENDING', 'CREATE_IN_PROGRESS',
+                                                                                'CREATE_COMPLETE']]
+
+            if change_sets:
+                print(f'\nExisting ChangeSets:')
+                for cs in change_sets:
+                    print(f'  {cs["CreationTime"]}: {cs["ChangeSetName"]} ({cs["Status"]})')
+                if self.config.existing_changes == 'DISALLOW':
+                    raise ValidationError('Creation of new ChangeSet not allowed when existing ChangeSets found')
+                elif self.config.existing_changes == 'FAILED_ONLY' and successful_change_sets:
+                    raise ValidationError('Creation of new ChangeSet not allowed when existing valid ChangeSets found')
+
     def deploy(self):
         """
         Create a new Stack or update an existing Stack using a ChangeSet.
@@ -47,6 +67,7 @@ class Runner:
         and if Auto-Approve is set, will then execute the ChangeSet and wait for that to complete.
         If there are no changes in the ChangeSet it will be automatically deleted.
         :raises StackError: If creating the ChangeSet or executing it fails
+        :raises ValidationError: If stack is not in a deployable status
         """
         if not StackStatus.is_creatable(self.stack) and not StackStatus.is_updatable(self.stack):
             stack_status = StackStatus.get_status(self.stack)
@@ -56,6 +77,8 @@ class Runner:
             else:
                 raise ValidationError(f'Stack {self.config.stack_name} is not in a deployable status: '
                                       f'{stack_status.name}')
+
+        self.check_change_sets()
 
         info(f'\nCreating ChangeSet {self.change_set_name}\n')
         try:

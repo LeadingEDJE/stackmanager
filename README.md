@@ -1,4 +1,4 @@
-# Stack-Manager
+# stackmanager
 
 [![PyPI version](https://badge.fury.io/py/stackmanager.svg)](https://badge.fury.io/py/stackmanager)
 
@@ -114,16 +114,27 @@ Usage: stackmanager deploy [OPTIONS]
   Create or update a CloudFormation stack using ChangeSets.
 
 Options:
-  -p, --profile TEXT       AWS Profile, will use default or environment variables if not specified
-  -c, --config TEXT       YAML Configuration file  [required]
-  -e, --environment TEXT  Environment to deploy  [required]
-  -r, --region TEXT       AWS Region to deploy  [required]
-  -t, --template TEXT     Override template
-  --parameter TEXT...     Override a parameter, can be specified multiple times
-  --change-set-name TEXT  Custom ChangeSet name
-  --auto-apply            Automatically apply created ChangeSet
-  --help                  Show this message and exit.
+  -p, --profile TEXT              AWS Profile, will use default or environment
+                                  variables if not specified
+
+  -c, --config TEXT               YAML Configuration file  [required]
+  -e, --environment TEXT          Environment to deploy  [required]
+  -r, --region TEXT               AWS Region to deploy  [required]
+  -t, --template TEXT             Override template
+  --parameter TEXT...             Override a parameter, can be specified
+                                  multiple times
+  --change-set-name TEXT          Custom ChangeSet name
+  --existing-changes [ALLOW|FAILED_ONLY|DISALLOW]
+                                  Whether deployment is allowed when there are
+                                  existing ChangeSets
+  --auto-apply                    Automatically apply created ChangeSet
+  --help                          Show this message and exit.
 ```
+
+_(since 0.7.0)_ Existing ChangeSets, if any, will be listed for the stack and depending upon the `--existing-changes`
+value (which defaults to `ALLOW`) this may prevent the deployment. If set to `FAILED_ONLY` then failed ChangeSets
+will not prevent a new change from being created, but if set to `DISALLOW` any existing ChangeSets will prevent new
+changes.
 
 ### apply
 
@@ -131,16 +142,24 @@ Options:
 Usage: stackmanager apply [OPTIONS]
 
   Apply a CloudFormation ChangeSet to create or update a CloudFormation
-  stack.
+  stack. If using --change-set-name then --config --environment are --region
+  are required. If using --change-set-id no other values are required
+  (although --profile and --region may be needed).
 
 Options:
-  -p, --profile TEXT       AWS Profile, will use default or environment variables if not specified
-  -c, --config TEXT       YAML Configuration file  [required]
-  -e, --environment TEXT  Environment to deploy  [required]
-  -r, --region TEXT       AWS Region to deploy  [required]
-  --change-set-name TEXT  ChangeSet to apply  [required]
+  -p, --profile TEXT      AWS Profile, will use default or environment
+                          variables if not specified
+
+  -c, --config TEXT       YAML Configuration file
+  -e, --environment TEXT  Environment to deploy
+  -r, --region TEXT       AWS Region to deploy
+  --change-set-name TEXT  Name of ChangeSet to apply
+  --change-set-id TEXT    Identifier of ChangeSet to apply
   --help                  Show this message and exit.
 ```
+
+_(since 0.7.0)_ Using `--change-set-id` allows you to apply a ChangeSet without loading the configuration.
+This can be useful in a CI/CD pipeline as this may avoid the need to checkout the repository for applying a change.
 
 ### delete
 
@@ -200,10 +219,10 @@ Stackmanager will automatically detect when it is running in an Azure DevOps pip
 It will print `##vso` strings under the following circumstances:
 
 * `deploy` has created a ChangeSet and it has not been auto-applied: \
-  This sets a variable named `change_set_name` containing the `change_set_name` that can be used with the `apply` 
-  command in a later step/job/stage.\
-  The name of the variable can be overridden by setting the `CHANGE_SET_VARIABLE` environment variable.
-* `deploy` has created a ChangeSet but it contains no changes: \
+  Sets two variables for the ChangeSet name and identifier. These default to `change_set_name` and `change_set_id`
+  _(since 0.7.0)_ but the name of these variables can be changed with the `CHANGE_SET_NAME_VARIABLE` and 
+  `CHANGE_SET_ID_VARIABLE` environment variables. These values can be used with the `apply` command in a later stage.
+* `deploy` has created a ChangeSet but it contains no changes:\
    This logs a warning (`##vso[task.logissue]`) and sets the status to `SucceededWithIssues` (`##vso[task.complete]`)
    allowing following steps/jobs/stages to be skipped by checking for the `SucceededStatus` in a condition.
 * `deploy` or `apply` fails when applying a ChangeSet: \
