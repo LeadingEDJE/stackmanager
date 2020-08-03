@@ -9,7 +9,7 @@ def config_file(filename='config.yaml'):
 
 
 def test_loader_dev():
-    config = load_config(config_file(), 'dev', 'us-east-1', None, None, False)
+    config = load_config(config_file(), 'dev', 'us-east-1', False)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
@@ -28,7 +28,7 @@ def test_loader_dev():
 
 
 def test_loader_prod():
-    config = load_config(config_file(), 'prod', 'us-east-2', None, None, False)
+    config = load_config(config_file(), 'prod', 'us-east-2', False)
 
     assert config.environment == 'prod'
     assert config.region == 'us-east-2'
@@ -52,7 +52,8 @@ def test_loader_dev_overrides():
         ('Domain', 'notdev.example.com'),
         ('Extra', 'OverrideDefault')
     ]
-    config = load_config(config_file(), 'dev', 'us-east-1', 'integration/config.yaml', override_parameters, False)
+    config = load_config(config_file(), 'dev', 'us-east-1', False, Template='integration/config.yaml',
+                         Parameters=override_parameters, ChangeSetName='TestChangeSet', AutoApply=True)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
@@ -64,13 +65,15 @@ def test_loader_dev_overrides():
         'KeyId': 'guid1',
         'Extra': 'OverrideDefault'
     }
+    assert config.change_set_name == 'TestChangeSet'
+    assert config.auto_apply is True
 
 
 def test_loader_missing_environment():
     with pytest.raises(ValidationError, match='Environment test for us-east-1 not found in .*'):
-        load_config(config_file(), 'test', 'us-east-1', None, None)
+        load_config(config_file(), 'test', 'us-east-1')
 
 
 def test_loader_missing_region():
     with pytest.raises(ValidationError, match='Environment dev for us-west-1 not found in .*'):
-        load_config(config_file(), 'dev', 'us-west-1', None, None)
+        load_config(config_file(), 'dev', 'us-west-1')

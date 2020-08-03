@@ -32,8 +32,9 @@ def deploy(ctx, profile, config, environment, region, template, parameter, chang
     Create or update a CloudFormation stack using ChangeSets.
     """
     try:
-        cfg = load_config(config, environment, region, template, parameter)
-        runner = create_runner(profile, cfg, change_set_name, auto_apply)
+        cfg = load_config(config, environment, region, Template=template, Parameters=parameter,
+                          ChangeSetName=change_set_name, AutoApply=auto_apply)
+        runner = create_runner(profile, cfg)
         runner.deploy()
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
@@ -52,8 +53,8 @@ def apply(ctx, profile, config, environment, region, change_set_name):
     Apply a CloudFormation ChangeSet to create or update a CloudFormation stack.
     """
     try:
-        cfg = load_config(config, environment, region, None, None, False)
-        runner = create_runner(profile, cfg, change_set_name, False)
+        cfg = load_config(config, environment, region, False, ChangeSetName=change_set_name)
+        runner = create_runner(profile, cfg)
         runner.execute_change_set()
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
@@ -72,8 +73,8 @@ def delete(ctx, profile, config, environment, region, retain_resources):
     Delete a CloudFormation stack.
     """
     try:
-        cfg = load_config(config, environment, region, None, None, False)
-        runner = create_runner(profile, cfg, None, False)
+        cfg = load_config(config, environment, region, False)
+        runner = create_runner(profile, cfg)
         runner.delete(retain_resources)
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')

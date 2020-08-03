@@ -1,22 +1,21 @@
-from stackmanager.exceptions import ValidationError
-from stackmanager.config import Config
+from .exceptions import ValidationError
+from .config import Config, ENVIRONMENT, REGION, TEMPLATE, PARAMETERS, CHANGE_SET_NAME, CHANGE_SET_ID, AUTO_APPLY
 import yaml
 
 
-def load_config(config_file, environment, region, template, parameters, check_template=True):
+def load_config(config_file, environment, region, check_template=True, **kwargs):
     """
     Build hierarchy of configurations by loading multi-document config file.
     There must be a matching config for the environment name and region.
     :param str config_file: Path to config file
     :param str environment: Environment being updated
     :param str region: Region for the Stack
-    :param str template: Override value for Template from command line
-    :param list parameters: Override values for Parameters from the command line
     :param bool check_template: Check Template exists when validating config
+    :param dict kwargs: Other arguments to be added to arg config
     :return: Top of Config hierarchy
     :raises validationException: If config file not found, matching environment not found in config or config is invalid
     """
-    arg_config = create_arg_config(environment, region, template, parameters)
+    arg_config = create_arg_config(environment, region, kwargs)
 
     try:
         with open(config_file) as c:
@@ -43,22 +42,28 @@ def load_config(config_file, environment, region, template, parameters, check_te
         raise ValidationError(f'Config file {config_file} not found')
 
 
-def create_arg_config(environment, region, template, parameters):
+def create_arg_config(environment, region, kwargs):
     """
     Create a Configuration from the command line arguments, used as top of hierarchy to
     optionally override template and parameters.
     :param str environment: Environment
     :param str region: Region to deploy
-    :param str template: Override value for Template from command line
-    :param list parameters: Override values for Parameters from the command line
+    :param dict kwargs: Other arguments to be added to arg config
     :return: Argument Config
     """
     raw_config = {
-        'Environment': environment,
-        'Region': region
+        ENVIRONMENT: environment,
+        REGION: region
     }
-    if template:
-        raw_config['Template'] = template
-    if parameters:
-        raw_config['Parameters'] = dict(parameters)
+    if TEMPLATE in kwargs:
+        raw_config[TEMPLATE] = kwargs[TEMPLATE]
+    if PARAMETERS in kwargs:
+        raw_config[PARAMETERS] = dict(kwargs[PARAMETERS])
+    if CHANGE_SET_NAME in kwargs:
+        raw_config[CHANGE_SET_NAME] = kwargs[CHANGE_SET_NAME]
+    if CHANGE_SET_ID in kwargs:
+        raw_config[CHANGE_SET_ID] = kwargs[CHANGE_SET_ID]
+    if AUTO_APPLY in kwargs:
+        raw_config[AUTO_APPLY] = kwargs[AUTO_APPLY]
+
     return Config(raw_config)

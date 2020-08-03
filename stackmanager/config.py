@@ -3,6 +3,18 @@ from stackmanager.exceptions import ValidationError
 from jinja2 import Template
 
 
+ENVIRONMENT = 'Environment'
+REGION = 'Region'
+STACK_NAME = 'StackName'
+PARAMETERS = 'Parameters'
+TEMPLATE = 'Template'
+TAGS = 'Tags'
+CAPABILITIES = 'Capabilities'
+CHANGE_SET_NAME = 'ChangeSetName'
+CHANGE_SET_ID = 'ChangeSetId'
+AUTO_APPLY = 'AutoApply'
+
+
 class Config:
     """
     Encapsulates Configuration for one of the following:
@@ -21,8 +33,8 @@ class Config:
         """
         self.parent = None
         self.config = config
-        self.environment = config.get('Environment')
-        self.region = config.get('Region')
+        self.environment = config.get(ENVIRONMENT)
+        self.region = config.get(REGION)
 
         if not self.environment:
             raise ValidationError('Environment is required')
@@ -118,7 +130,7 @@ class Config:
         Get Stack Name required property
         :return: Stack name, evaluated as a Jinja2 template
         """
-        template = Template(self.__get_value('StackName', True))
+        template = Template(self.__get_value(STACK_NAME, True))
         return template.render(Environment=self.environment, Region=self.region)
 
     @property
@@ -127,7 +139,7 @@ class Config:
         Get Template required property
         :return: Template path or URL
         """
-        return self.__get_value('Template', True)
+        return self.__get_value(TEMPLATE, True)
 
     @property
     def parameters(self):
@@ -136,7 +148,7 @@ class Config:
         and substituting any templated values
         :return: Parameters dictionary
         """
-        return self.__template_all(self.__get_dict('Parameters'))
+        return self.__template_all(self.__get_dict(PARAMETERS))
 
     @property
     def tags(self):
@@ -145,7 +157,7 @@ class Config:
         and substituting any templated values
         :return: Tags dictionary
         """
-        return self.__template_all(self.__get_dict('Tags'))
+        return self.__template_all(self.__get_dict(TAGS))
 
     @property
     def capabilities(self):
@@ -153,7 +165,19 @@ class Config:
         Get list of capabilities
         :return: Capabilities
         """
-        return self.__get_list('Capabilities')
+        return self.__get_list(CAPABILITIES)
+
+    @property
+    def change_set_name(self):
+        return self.__get_value(CHANGE_SET_NAME, False)
+
+    @property
+    def change_set_id(self):
+        return self.__get_value(CHANGE_SET_ID, False)
+
+    @property
+    def auto_apply(self):
+        return self.__get_value(AUTO_APPLY, False) or False
 
     def validate(self, check_template=True):
         """
