@@ -1,3 +1,4 @@
+import arrow
 import boto3
 import os
 import uuid
@@ -7,7 +8,7 @@ from stackmanager.exceptions import StackError, ValidationError
 from stackmanager.messages import info, warn, error
 from stackmanager.status import StackStatus
 from tabulate import tabulate
-
+from textwrap import wrap
 
 class Runner:
     """
@@ -54,7 +55,7 @@ class Runner:
             if change_sets:
                 print(f'\nExisting ChangeSets:')
                 for cs in change_sets:
-                    print(f'  {cs["CreationTime"]}: {cs["ChangeSetName"]} ({cs["Status"]})')
+                    print(f'  {self.format_timestamp(cs["CreationTime"])}: {cs["ChangeSetName"]} ({cs["Status"]})')
                 if self.config.existing_changes == 'DISALLOW':
                     raise ValidationError('Creation of new ChangeSet not allowed when existing ChangeSets found')
                 elif self.config.existing_changes == 'FAILED_ONLY' and successful_change_sets:
@@ -220,8 +221,9 @@ class Runner:
         for page in iterator:
             for event in page['StackEvents']:
                 if not last_timestamp or event['Timestamp'] > last_timestamp:
-                    table.append([event['Timestamp'], event['LogicalResourceId'], event['ResourceType'],
-                                 event['ResourceStatus'], event.get('ResourceStatusReason', '-')])
+                    reason = '\n'.join(wrap(event.get('ResourceStatusReason', '-'), 50))
+                    table.append([self.format_timestamp(event['Timestamp']), event['LogicalResourceId'],
+                                  event['ResourceType'], event['ResourceStatus'], reason])
 
         table.reverse()
         print(tabulate(table, headers=['Timestamp', 'LogicalResourceId', 'ResourceType', 'ResourceStatus', 'Reason']))
@@ -262,6 +264,18 @@ class Runner:
         :return: Tags dictionary
         """
         return [({'Key': k, 'Value': v}) for k, v in self.config.tags.items()]
+
+    def format_timestamp(self, timestamp):
+        """
+        Format Timestamp in local or specified timezone.
+        :param timestamp: Raw UTC timestamp from AWS
+        :return: Formatted timestamp
+        """
+        if 'STACKMANAGER_TIMEZONE' in os.environ:
+            # Skip timezone offset if using provided timezone
+            return arrow.get(timestamp).to(os.environ['STACKMANAGER_TIMEZONE']).format('YYYY-MM-DD HH:mm:ss')
+
+        return arrow.get(timestamp).to('local').format()
 
 
 class AzureDevOpsRunner(Runner):
