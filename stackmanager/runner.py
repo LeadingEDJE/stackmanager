@@ -100,7 +100,7 @@ class Runner:
                 self.client.delete_change_set(ChangeSetName=self.change_set_name, StackName=self.config.stack_name)
                 return False
 
-            raise StackError(we)
+            raise StackError(f'ChangeSet creation failed - Status: {status}, Reason: {reason}')
 
         describe_change_set_response = self.client.describe_change_set(ChangeSetName=self.change_set_name,
                                                                        StackName=self.config.stack_name)
