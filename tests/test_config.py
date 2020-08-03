@@ -106,6 +106,41 @@ def test_tags_dev(dev_config):
     }
 
 
+def test_change_set_name():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'ChangeSetName': 'TestChangeSet'
+    })
+    assert config.change_set_name == 'TestChangeSet'
+
+
+def test_change_set_id():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'ChangeSetId': 'abc123'
+    })
+    assert config.change_set_id == 'abc123'
+
+
+def test_auto_apply():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'AutoApply': True
+    })
+    assert config.auto_apply is True
+
+
+def test_auto_apply_default():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1'
+    })
+    assert config.auto_apply is False
+
+
 def test_validate_config_with_template_file():
     config = Config({
         'Environment': 'dev',
