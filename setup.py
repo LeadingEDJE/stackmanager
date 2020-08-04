@@ -19,7 +19,8 @@ setup(
         'pyyaml',
         'tabulate',
         'jinja2',
-        'aws-lambda-builders'
+        'aws-lambda-builders',
+        'arrow'
     ],
     entry_points='''
         [console_scripts]
