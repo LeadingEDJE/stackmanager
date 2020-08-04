@@ -227,3 +227,13 @@ It will print `##vso` strings under the following circumstances:
    allowing following steps/jobs/stages to be skipped by checking for the `SucceededStatus` in a condition.
 * `deploy` or `apply` fails when applying a ChangeSet: \
    This logs an error (`##vso[task.logissue]`)
+
+## Configuration
+
+> Future plans are to have a global configuration or a larger set of environment variables that can configure
+> behavior.
+
+By default displayed timestamps (e.g. for CloudFormation events) will be displayed in the detected local timezone
+including the timezone offset. If you specify a timezone using the `STACKMANAGER_TIMEZONE` environment variable
+then this will be used instead and the timezone offset will be omitted. Olson Timezones (e.g. America/New_York)
+are supported.

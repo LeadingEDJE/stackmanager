@@ -15,6 +15,7 @@ tabulate = "*"
 click = "*"
 jinja2 = "*"
 aws-lambda-builders = "*"
+arrow = "*"
 
 [requires]
 python_version = "3"
