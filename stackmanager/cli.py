@@ -82,6 +82,41 @@ def apply(ctx, profile, config, environment, region, change_set_name, change_set
 @cli.command()
 @click.pass_context
 @click.option('-p', '--profile', help='AWS Profile, will use default or environment variables if not specified')
+@click.option('-c', '--config', help='YAML Configuration file')
+@click.option('-e', '--environment', help='Environment for stack')
+@click.option('-r', '--region', help='AWS Region for stack')
+@click.option('--change-set-name', help='Name of ChangeSet to reject')
+@click.option('--change-set-id', help='Identifier of ChangeSet to reject')
+def reject(ctx, profile, config, environment, region, change_set_name, change_set_id):
+    """
+    Reject a CloudFormation ChangeSet, deleting the stack if in REVIEW_IN_PROGRESS status and has no other ChangeSets.
+    If using --change-set-name then --config --environment are --region are required.
+    If using --change-set-id no other values are required (although --profile and --region may be needed).
+    """
+    if not change_set_name and not change_set_id:
+        raise click.UsageError("Option '--change-set-name' or '--change-set-id' required.")
+
+    try:
+        if change_set_id:
+            runner = create_changeset_runner(profile, region, change_set_id)
+            runner.reject_change_set()
+        else:
+            if not config:
+                raise click.UsageError("Missing option '-c' / '--config'.")
+            if not environment:
+                raise click.UsageError("Missing option '-e' / '--environment'.")
+
+            cfg = load_config(config, environment, region, False, ChangeSetName=change_set_name)
+            runner = create_runner(profile, cfg)
+            runner.reject_change_set()
+    except (ValidationError, StackError) as e:
+        error(f'\nError: {e}')
+        exit(1)
+
+
+@cli.command()
+@click.pass_context
+@click.option('-p', '--profile', help='AWS Profile, will use default or environment variables if not specified')
 @click.option('-c', '--config', required=True, help='YAML Configuration file')
 @click.option('-e', '--environment', required=True, help='Environment to deploy')
 @click.option('-r', '--region', required=True, help='AWS Region to deploy')
