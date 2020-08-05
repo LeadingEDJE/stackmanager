@@ -10,6 +10,7 @@ from stackmanager.status import StackStatus
 from tabulate import tabulate
 from textwrap import wrap
 
+
 class Runner:
     """
     Encapsulates calls to CloudFormation client to create, update and delete stacks
@@ -53,7 +54,7 @@ class Runner:
                                                                                 'CREATE_COMPLETE']]
 
             if change_sets:
-                print(f'\nExisting ChangeSets:')
+                print('\nExisting ChangeSets:')
                 for cs in change_sets:
                     print(f'  {self.format_timestamp(cs["CreationTime"])}: {cs["ChangeSetName"]} ({cs["Status"]})')
                 if self.config.existing_changes == 'DISALLOW':
@@ -168,6 +169,30 @@ class Runner:
         """
         error(f'\nChangeSet {self.change_set_name} for {self.config.stack_name} failed:\n')
         self.print_events(last_timestamp)
+
+    def reject_change_set(self):
+        """
+        Delete the named ChangeSet, and if the stack is in the REVIEW_IN_PROGRESS status and there are
+        no remaining ChangeSets, then delete the stack.
+        """
+        if not self.stack:
+            raise ValidationError(f'Stack {self.config.stack_name} not found')
+
+        try:
+            self.client.describe_change_set(ChangeSetName=self.change_set_name, StackName=self.config.stack_name)
+        except self.client.exceptions.ChangeSetNotFoundException:
+            raise ValidationError(f'ChangeSet {self.change_set_name} not found')
+
+        info(f'\nDeleting ChangeSet {self.change_set_name} for {self.config.stack_name}')
+
+        self.client.delete_change_set(ChangeSetName=self.change_set_name, StackName=self.config.stack_name)
+
+        if StackStatus.is_status(self.stack, StackStatus.REVIEW_IN_PROGRESS):
+            change_sets = self.client.list_change_sets(StackName=self.config.stack_name)['Summaries']
+            if not change_sets:
+                info(f'\nDeleting REVIEW_IN_PROGRESS Stack {self.config.stack_name} that has no remaining ChangeSets')
+                # Delete stack, no need to wait for deletion to complete
+                self.client.delete_stack(StackName=self.config.stack_name)
 
     def delete(self, retain_resources=[]):
         """
@@ -358,4 +383,4 @@ def create_changeset_runner(profile, region, change_set_id):
         return create_runner(profile, config)
 
     except client.exceptions.ChangeSetNotFoundException:
-        raise StackError(f'ChangeSet {change_set_id} not found')
+        raise ValidationError(f'ChangeSet {change_set_id} not found')

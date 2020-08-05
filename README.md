@@ -102,6 +102,7 @@ Stackmanager has the following commands:
 
 * `deploy` - Create or update a CloudFormation stack for a specific environment/region using a ChangeSet. By default exits after creating the changeset, but can `--auto-apply`.
 * `apply` - Apply a previously created ChangeSet
+* `reject` - Reject a previously created ChangeSet
 * `delete` - Delete an existing CloudFormation stack
 * `upload` - Uploads a local file to S3. Utility method to prevent the need to use the AWS CLI or other tools.
 * `build-lambda` - Build a Lambda zip file using aws-lambda-builders.
@@ -141,15 +142,12 @@ changes.
 ```
 Usage: stackmanager apply [OPTIONS]
 
-  Apply a CloudFormation ChangeSet to create or update a CloudFormation
-  stack. If using --change-set-name then --config --environment are --region
-  are required. If using --change-set-id no other values are required
-  (although --profile and --region may be needed).
+  Apply a CloudFormation ChangeSet to create or update a CloudFormation stack. 
+  If using --change-set-name then --config --environment are --region are required. 
+  If using --change-set-id no other values are required (although --profile and --region may be needed).
 
 Options:
-  -p, --profile TEXT      AWS Profile, will use default or environment
-                          variables if not specified
-
+  -p, --profile TEXT      AWS Profile, will use default or environment variables if not specified
   -c, --config TEXT       YAML Configuration file
   -e, --environment TEXT  Environment to deploy
   -r, --region TEXT       AWS Region to deploy
@@ -160,6 +158,25 @@ Options:
 
 _(since 0.7.0)_ Using `--change-set-id` allows you to apply a ChangeSet without loading the configuration.
 This can be useful in a CI/CD pipeline as this may avoid the need to checkout the repository for applying a change.
+
+### reject
+
+```
+Usage: stackmanager reject [OPTIONS]
+
+  Reject a CloudFormation ChangeSet, deleting the stack if in REVIEW_IN_PROGRESS status and has no other ChangeSets. 
+  If using --change-set-name then --config --environment are --region are required. 
+  If using --change-set-id no other values are required (although --profile and --region may be needed).
+
+Options:
+  -p, --profile TEXT      AWS Profile, will use default or environment variables if not specified
+  -c, --config TEXT       YAML Configuration file
+  -e, --environment TEXT  Environment for stack
+  -r, --region TEXT       AWS Region for stack
+  --change-set-name TEXT  Name of ChangeSet to reject
+  --change-set-id TEXT    Identifier of ChangeSet to reject
+  --help                  Show this message and exit.
+```
 
 ### delete
 
@@ -177,7 +194,7 @@ Options:
   --help                   Show this message and exit.
 ```
 
-### Upload
+### upload
 
 ```
 Usage: stackmanager upload [OPTIONS]
@@ -194,7 +211,7 @@ Options:
   --help               Show this message and exit.
 ```
 
-### Build Lambda
+### build-lambda
 
 ```
 Usage: stackmanager build-lambda [OPTIONS]
