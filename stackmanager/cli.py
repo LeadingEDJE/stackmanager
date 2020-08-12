@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 import click
+import logging
 import stackmanager.packager
 from stackmanager.exceptions import PackagingError, StackError, TransferError, ValidationError
 from stackmanager.loader import load_config
 from stackmanager.messages import error
 from stackmanager.runner import create_runner, create_changeset_runner
 from stackmanager.uploader import create_uploader
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 
 @click.group(chain=True)

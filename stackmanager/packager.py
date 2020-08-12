@@ -1,5 +1,6 @@
-import tempfile
+import logging
 import os
+import tempfile
 from stackmanager.exceptions import PackagingError, ValidationError
 from stackmanager.messages import info
 from aws_lambda_builders.builder import LambdaBuilder
@@ -33,6 +34,16 @@ RUNTIMES = {
     'java8': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
     'java11': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG]
 }
+
+# Configure logging for aws_lambda_builders
+log_stream_handler = logging.StreamHandler()
+log_stream_handler.setLevel(logging.DEBUG)
+log_stream_handler.setFormatter(logging.Formatter("%(message)s"))
+
+build_logger = logging.getLogger("aws_lambda_builders")
+build_logger.setLevel(logging.INFO)
+build_logger.propagate = False
+build_logger.addHandler(log_stream_handler)
 
 
 def get_config(runtime, source_dir):
@@ -69,6 +80,8 @@ def build_lambda(source_dir, output_dir, runtime, archive_name):
     builder = LambdaBuilder(config.language, config.dependency_manager, None)
     manifest_path = os.path.join(source_dir, config.manifest_name)
     archive_name = archive_name if archive_name else os.path.basename(os.path.normpath(source_dir))
+
+    info(f'\nBuilding {runtime} Lambda function from {source_dir}\n')
 
     with tempfile.TemporaryDirectory() as artifacts_dir:
         with tempfile.TemporaryDirectory() as scratch_dir:
