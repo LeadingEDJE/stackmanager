@@ -43,6 +43,7 @@ class StackStatus(Enum):
         return stack_status in [StackStatus.CREATE_IN_PROGRESS,
                                 StackStatus.DELETE_IN_PROGRESS,
                                 StackStatus.ROLLBACK_IN_PROGRESS,
+                                StackStatus.UPDATE_IN_PROGRESS,
                                 StackStatus.UPDATE_COMPLETE_CLEANUP_IN_PROGRESS,
                                 StackStatus.UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS,
                                 StackStatus.UPDATE_ROLLBACK_IN_PROGRESS]
