@@ -1,6 +1,10 @@
-name: Pull Request Build
+name: Pull Request and Merge (master) Build
 
-on: pull_request
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -27,3 +31,8 @@ jobs:
     - name: Test with pytest
       run: |
         pipenv run pytest -v --cov stackmanager
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: .coverage
