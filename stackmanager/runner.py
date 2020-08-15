@@ -110,14 +110,14 @@ class Runner:
                 WaiterConfig={'Delay': 5, 'MaxAttempts': 120})
         except WaiterError as we:
             resp = we.last_response
-            status = resp["Status"]
-            reason = resp["StatusReason"]
+            status = resp['Status']
+            reason = resp['StatusReason']
 
             # See SAM CLI: https://github.com/awslabs/aws-sam-cli/blob/develop/samcli/lib/deploy/deployer.py#L272
             if (
-                    status == "FAILED"
+                    status == 'FAILED'
                     and "The submitted information didn't contain changes." in reason
-                    or "No updates are to be performed" in reason
+                    or 'No updates are to be performed' in reason
             ):
                 warn('No changes to Stack {}'.format(self.config.stack_name))
                 self.client.delete_change_set(ChangeSetName=self.change_set_name, StackName=self.config.stack_name)
@@ -240,7 +240,7 @@ class Runner:
         Print events occurring since the last timestamp if provided
         :param str last_timestamp: Last Timestamp as UTC string
         """
-        paginator = self.client.get_paginator("describe_stack_events")
+        paginator = self.client.get_paginator('describe_stack_events')
         iterator = paginator.paginate(StackName=self.config.stack_name)
         table = []
         for page in iterator:
