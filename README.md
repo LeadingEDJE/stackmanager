@@ -1,6 +1,7 @@
 # stackmanager
 
 [![PyPI version](https://badge.fury.io/py/stackmanager.svg)](https://badge.fury.io/py/stackmanager)
+[![Coverage Status](https://coveralls.io/repos/github/LeadingEDJE/stackmanager/badge.svg?branch=master)](https://coveralls.io/github/LeadingEDJE/stackmanager?branch=master)
 
 Utility to manage CloudFormation stacks based upon a Template (either local or in S3) and a YAML configuration file.
 
