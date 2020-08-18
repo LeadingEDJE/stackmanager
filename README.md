@@ -105,6 +105,7 @@ Stackmanager has the following commands:
 * `apply` - Apply a previously created ChangeSet
 * `reject` - Reject a previously created ChangeSet
 * `delete` - Delete an existing CloudFormation stack
+* `status` - Print current status of Stack
 * `upload` - Uploads a local file to S3. Utility method to prevent the need to use the AWS CLI or other tools.
 * `build-lambda` - Build a Lambda zip file using aws-lambda-builders.
 
@@ -193,6 +194,22 @@ Options:
   -r, --region TEXT        AWS Region to deploy  [required]
   --retain-resources TEXT  Logical Ids of resources to retain
   --help                   Show this message and exit.
+```
+
+### status
+
+```
+Usage: stackmanager status [OPTIONS]
+
+  Print current status of Stack. Includes pending ChangeSets and recent events.
+
+Options:
+  -p, --profile TEXT      AWS Profile, will use default or environment variables if not specified
+  -c, --config TEXT       YAML Configuration file  [required]
+  -e, --environment TEXT  Environment to deploy  [required]
+  -r, --region TEXT       AWS Region to deploy  [required]
+  --event-days INTEGER    Number of days of events to include in output
+  --help                  Show this message and exit.
 ```
 
 ### upload

@@ -36,7 +36,9 @@ class Runner:
         try:
             stacks = self.client.describe_stacks(StackName=self.config.stack_name)['Stacks']
             stack = stacks[0]
-            info(f'\nStack: {self.config.stack_name}, Status: {StackStatus.get_status(stack).name}')
+            stack_timestamp = stack['LastUpdatedTime'] if 'LastUpdatedTime' in stack else stack['CreationTime']
+            info(f'\nStack: {self.config.stack_name}, Status: {StackStatus.get_status(stack).name} '
+                 f'({self.format_timestamp(stack_timestamp)})')
             return stack
         except ClientError:
             info(f'\nStack: {self.config.stack_name}, Status: does not exist')
@@ -226,6 +228,18 @@ class Runner:
             self.print_events(last_timestamp)
             raise StackError(we)
 
+    def status(self, event_days):
+        """
+        Output the current status of the stack showing pending ChangeSets and recent events.
+        :param int event_days: Number of days to show events for
+        """
+        self.check_change_sets()
+
+        if self.stack:
+            last_timestamp = arrow.utcnow().shift(days=-event_days)
+            info(f'\nEvents since {self.format_timestamp(last_timestamp)}:\n')
+            self.print_events(last_timestamp.datetime)
+
     def get_last_timestamp(self):
         """
         Get the last timestamp from the stack events, or None if there is no stack
@@ -250,8 +264,12 @@ class Runner:
                     table.append([self.format_timestamp(event['Timestamp']), event['LogicalResourceId'],
                                   event['ResourceType'], event['ResourceStatus'], reason])
 
-        table.reverse()
-        print(tabulate(table, headers=['Timestamp', 'LogicalResourceId', 'ResourceType', 'ResourceStatus', 'Reason']))
+        if table:
+            table.reverse()
+            print(tabulate(table, headers=['Timestamp', 'LogicalResourceId', 'ResourceType', 'ResourceStatus',
+                                           'Reason']))
+        else:
+            warn('No events')
 
     def build_change_set_args(self):
         """

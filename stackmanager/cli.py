@@ -138,6 +138,23 @@ def delete(ctx, profile, config, environment, region, retain_resources):
         exit(1)
 
 
+@cli.command()
+@click.pass_context
+@click.option('-p', '--profile', help='AWS Profile, will use default or environment variables if not specified')
+@click.option('-c', '--config', required=True, help='YAML Configuration file')
+@click.option('-e', '--environment', required=True, help='Environment to deploy')
+@click.option('-r', '--region', required=True, help='AWS Region to deploy')
+@click.option('--event-days', type=int, default=7, help='Number of days of events to include in output')
+def status(ctx, profile, config, environment, region, event_days):
+    """
+    Print current status of Stack.
+    Includes pending ChangeSets and recent events.
+    """
+    cfg = load_config(config, environment, region, False)
+    runner = create_runner(profile, cfg)
+    runner.status(event_days)
+
+
 @cli.command(name='build-lambda')
 @click.pass_context
 @click.option('-s', '--source-dir', required=True, help='Source directory')
