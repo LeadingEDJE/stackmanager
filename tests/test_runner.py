@@ -1,6 +1,7 @@
 import os
 import pytest
 from botocore.exceptions import ClientError, WaiterError
+from datetime import datetime, timezone
 from stackmanager.config import Config
 from stackmanager.exceptions import StackError, ValidationError
 from stackmanager.runner import AzureDevOpsRunner, Runner
@@ -34,7 +35,9 @@ def create_complete_stack():
     return {
         'Stacks': [{
             'StackName': 'TestStack',
-            'StackStatus': StackStatus.CREATE_COMPLETE.name
+            'StackStatus': StackStatus.CREATE_COMPLETE.name,
+            'CreationTime': datetime(2019, 12, 31, 18, 29, 53, 64136, tzinfo=timezone.utc),
+            'LastUpdatedTime': datetime(2019, 12, 31, 18, 30, 11, 12345, tzinfo=timezone.utc)
         }]
     }
 
@@ -44,7 +47,7 @@ def single_successful_changeset():
     return {
         'Summaries': [{
             'ChangeSetName': 'ExistingChangeSet',
-            'CreationTime': '2020-01-01T00:00:00.00000+0000',
+            'CreationTime': datetime(2020, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc),
             'Status': 'CREATE_COMPLETE'
         }]
     }
@@ -69,13 +72,13 @@ def before_and_after_events():
         {
             'StackEvents': [
                 {
-                    'Timestamp': '2020-01-01T12:00:00.00000-0000',
+                    'Timestamp': datetime(2020, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc),
                     'LogicalResourceId': 'TestStack',
                     'ResourceType': 'AWS::CloudFormation::Stack',
                     'ResourceStatus': 'CREATE_COMPLETE'
                 },
                 {
-                    'Timestamp': '2020-01-01T11:58:20.12436-0000',
+                    'Timestamp': datetime(2020, 1, 1, 11, 58, 20, 12436, tzinfo=timezone.utc),
                     'LogicalResourceId': 'Topic',
                     'ResourceType': 'AWS::SNS::Topic',
                     'ResourceStatus': 'CREATE_COMPLETE'
@@ -85,32 +88,32 @@ def before_and_after_events():
         {
             'StackEvents': [
                 {
-                    'Timestamp': '2020-01-01T13:25:01.32464-0000',
+                    'Timestamp': datetime(2020, 1, 1, 13, 25, 1, 32464, tzinfo=timezone.utc),
                     'LogicalResourceId': 'TestStack',
                     'ResourceType': 'AWS::CloudFormation::Stack',
                     'ResourceStatus': 'UPDATE_COMPLETE',
                 },
                 {
-                    'Timestamp': '2020-01-01T13:24:53.34531-0000',
+                    'Timestamp': datetime(2020, 1, 1, 13, 24, 53, 34531, tzinfo=timezone.utc),
                     'LogicalResourceId': 'Queue',
                     'ResourceType': 'AWS::SQS::Queue',
                     'ResourceStatus': 'CREATE_COMPLETE'
                 },
                 {
-                    'Timestamp': '2020-01-01T13:23:11.64372-0000',
+                    'Timestamp': datetime(2020, 1, 1, 13, 23, 11, 64372, tzinfo=timezone.utc),
                     'LogicalResourceId': 'TestStack',
                     'ResourceType': 'AWS::CloudFormation::Stack',
                     'ResourceStatus': 'UPDATE_IN_PROGRESS',
                     'ResourceStatusReason': 'User Initiated'
                 },
                 {
-                    'Timestamp': '2020-01-01T12:00:00.00000-0000',
+                    'Timestamp': datetime(2020, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc),
                     'LogicalResourceId': 'TestStack',
                     'ResourceType': 'AWS::CloudFormation::Stack',
                     'ResourceStatus': 'CREATE_COMPLETE'
                 },
                 {
-                    'Timestamp': '2020-01-01T11:58:20.12436-0000',
+                    'Timestamp': datetime(2020, 1, 1, 11, 58, 20, 12436, tzinfo=timezone.utc),
                     'LogicalResourceId': 'Topic',
                     'ResourceType': 'AWS::SNS::Topic',
                     'ResourceStatus': 'CREATE_COMPLETE'
@@ -139,7 +142,10 @@ def client(create_complete_stack, single_successful_changeset, describe_changese
 # Runner tests
 ###################################################
 
-def test_load_stack(client, config, capsys):
+def test_load_stack(client, config, capsys, monkeypatch):
+    # Prevent differences in format depending upon where this runs
+    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
+
     runner = Runner(client, config)
 
     client.describe_stacks.assert_called_once_with(StackName='TestStack')
@@ -147,12 +153,33 @@ def test_load_stack(client, config, capsys):
     assert runner.change_set_name == 'TestChangeSet'
 
     captured = capsys.readouterr()
-    assert captured.out == '\nStack: TestStack, Status: CREATE_COMPLETE\n'
+    assert captured.out == '\nStack: TestStack, Status: CREATE_COMPLETE (2019-12-31 18:30:11)\n'
+
+
+def test_load_stack_pending(config, capsys, monkeypatch):
+    # Prevent differences in format depending upon where this runs
+    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
+
+    describe_stacks = {
+        'Stacks': [{
+            'StackName': 'TestStack',
+            'StackStatus': StackStatus.REVIEW_IN_PROGRESS.name,
+            'CreationTime': datetime(2019, 12, 31, 18, 29, 53, 64136, tzinfo=timezone.utc)
+        }]
+    }
+
+    mock = MagicMock(**{'describe_stacks.return_value': describe_stacks})
+    runner = Runner(mock, config)
+
+    mock.describe_stacks.assert_called_once_with(StackName='TestStack')
+    assert runner.stack is not None
+
+    captured = capsys.readouterr()
+    assert captured.out == '\nStack: TestStack, Status: REVIEW_IN_PROGRESS (2019-12-31 18:29:53)\n'
 
 
 def test_load_stack_does_not_exist(config, capsys):
-    attrs = {'describe_stacks.side_effect': ClientError({}, 'describe_stacks')}
-    mock = MagicMock(**attrs)
+    mock = MagicMock(**{'describe_stacks.side_effect': ClientError({}, 'describe_stacks')})
     runner = Runner(mock, config)
 
     mock.describe_stacks.assert_called_once_with(StackName='TestStack')
@@ -167,7 +194,8 @@ def test_deploy_rollback_complete(client, config):
     describe_stacks = {
         'Stacks': [{
             'StackName': 'TestStack',
-            'StackStatus': StackStatus.ROLLBACK_COMPLETE.name
+            'StackStatus': StackStatus.ROLLBACK_COMPLETE.name,
+            'CreationTime': '2019-12-31T18:30:11.12345+0000'
         }]
     }
     client.configure_mock(**{'describe_stacks.return_value': describe_stacks})
@@ -182,7 +210,8 @@ def test_deploy_invalid_status(client, config):
     describe_stacks = {
         'Stacks': [{
             'StackName': 'TestStack',
-            'StackStatus': StackStatus.UPDATE_IN_PROGRESS.name
+            'StackStatus': StackStatus.UPDATE_IN_PROGRESS.name,
+            'CreationTime': '2019-12-31T18:30:11.12345+0000'
         }]
     }
     client.configure_mock(**{'describe_stacks.return_value': describe_stacks})
@@ -338,20 +367,20 @@ def test_execute_change_set_waiter_error(client, config, capsys, monkeypatch):
     stack_events = {
         'StackEvents': [
             {
-                'Timestamp': '2020-01-01T13:33:41.00000-0000',
+                'Timestamp': datetime(2020, 1, 1, 13, 33, 41, 0, tzinfo=timezone.utc),
                 'LogicalResourceId': 'Queue',
                 'ResourceType': 'AWS::SQS::Queue',
                 'ResourceStatus': 'CREATE_FAILED',
                 'ResourceStatusReason': 'Something went wrong'
             },
             {
-                'Timestamp': '2020-01-01T12:00:00.00000-0000',
+                'Timestamp': datetime(2020, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc),
                 'LogicalResourceId': 'TestStack',
                 'ResourceType': 'AWS::CloudFormation::Stack',
                 'ResourceStatus': 'CREATE_COMPLETE'
             },
             {
-                'Timestamp': '2020-01-01T11:58:20.12436-0000',
+                'Timestamp': datetime(2020, 1, 1, 11, 58, 20, 12436, tzinfo=timezone.utc),
                 'LogicalResourceId': 'Topic',
                 'ResourceType': 'AWS::SNS::Topic',
                 'ResourceStatus': 'CREATE_COMPLETE'
@@ -442,7 +471,8 @@ def test_delete_invalid_status(client, config):
     describe_stacks = {
         'Stacks': [{
             'StackName': 'TestStack',
-            'StackStatus': StackStatus.UPDATE_IN_PROGRESS.name
+            'StackStatus': StackStatus.UPDATE_IN_PROGRESS.name,
+            'CreationTime': '2019-12-31T18:30:11.12345+0000'
         }]
     }
     client.configure_mock(**{'describe_stacks.return_value': describe_stacks})
@@ -474,20 +504,20 @@ def test_delete_waiter_error(client, config, capsys, monkeypatch):
     stack_events = {
         'StackEvents': [
             {
-                'Timestamp': '2020-01-01T13:35:11.00000-0000',
+                'Timestamp': datetime(2020, 1, 1, 13, 35, 11, 0, tzinfo=timezone.utc),
                 'LogicalResourceId': 'Topic',
                 'ResourceType': 'AWS::SNS::Topic',
                 'ResourceStatus': 'DELETE_FAILED',
                 'ResourceStatusReason': 'Something went wrong'
             },
             {
-                'Timestamp': '2020-01-01T12:00:00.00000-0000',
+                'Timestamp': datetime(2020, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc),
                 'LogicalResourceId': 'TestStack',
                 'ResourceType': 'AWS::CloudFormation::Stack',
                 'ResourceStatus': 'CREATE_COMPLETE'
             },
             {
-                'Timestamp': '2020-01-01T11:58:20.12436-0000',
+                'Timestamp': datetime(2020, 1, 1, 11, 58, 20, 12436, tzinfo=timezone.utc),
                 'LogicalResourceId': 'Topic',
                 'ResourceType': 'AWS::SNS::Topic',
                 'ResourceStatus': 'CREATE_COMPLETE'
@@ -511,9 +541,47 @@ def test_delete_waiter_error(client, config, capsys, monkeypatch):
            in captured.out
 
 
+def test_status(client, config, capsys, monkeypatch):
+    # Prevent differences in format depending upon where this runs
+    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
+
+    before = datetime(2019, 12, 31, 0, 0, 0, 0, tzinfo=timezone.utc)
+    now = datetime.now(tz=timezone.utc)
+
+    runner = Runner(client, config)
+    runner.status((now-before).days)
+
+    captured = capsys.readouterr()
+
+    assert 'Stack: TestStack, Status: CREATE_COMPLETE (2019-12-31 18:30:11)' in captured.out
+    assert 'Existing ChangeSets:' in captured.out
+    assert '2020-01-01 00:00:00: ExistingChangeSet (CREATE_COMPLETE)' in captured.out
+    assert 'Events since 2019-12-31' in captured.out
+    # Verify that the events are included
+    assert '2020-01-01 11:58:20  Topic                AWS::SNS::Topic             CREATE_COMPLETE     -' in captured.out
+
+
+def test_status_no_events(client, config, capsys):
+    runner = Runner(client, config)
+    runner.status(7)
+
+    captured = capsys.readouterr()
+    assert 'No events' in captured.out
+
+
+def test_status_does_not_exist(config, capsys):
+    mock = MagicMock(**{'describe_stacks.side_effect': ClientError({}, 'describe_stacks')})
+    runner = Runner(mock, config)
+    runner.status(7)
+
+    captured = capsys.readouterr()
+    assert captured.out == '\nStack: TestStack, Status: does not exist\n'
+
+
 ###################################################
 # AzureDevOpsRunner tests
 ###################################################
+
 
 def test_az_deploy_pending_changes(client, config, capsys):
     runner = AzureDevOpsRunner(client, config)

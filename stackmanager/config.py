@@ -178,7 +178,7 @@ class Config:
 
     @property
     def existing_changes(self):
-        return self.__get_value(EXISTING_CHANGES, True)
+        return self.__get_value(EXISTING_CHANGES, False) or 'ALLOW'
 
     @property
     def auto_apply(self):
