@@ -16,7 +16,7 @@ def test_loader_dev():
     assert config.template == 'integration/template.yaml'
     assert config.parameters == {
         'Environment': 'dev',
-        'SSMKey': '/Company/dev/us-east-1/Key',
+        'SSMKey': '/Company/d/us-east-1/Key',
         'Domain': 'dev.example.com',
         'KeyId': 'guid1'
     }
@@ -35,7 +35,7 @@ def test_loader_prod():
     assert config.template == 'integration/template.yaml'
     assert config.parameters == {
         'Environment': 'prod',
-        'SSMKey': '/Company/prod/us-east-2/Key',
+        'SSMKey': '/Company/p/us-east-2/Key',
         'Domain': 'prod.example.com',
         'KeyId': 'guid4'
     }

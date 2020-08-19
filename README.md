@@ -25,20 +25,23 @@ command line when creating or updating a CloudFormation stack.
 
 ```yaml
 Environment: dev
-StackName: "{{ Environment }}-StackManager-Integration"
+StackName: "{{ EnvironmentCode }}-StackManager-Integration"
 Region: us-east-1
 Parameters:
   Environment: "{{ Environment }}"
 Tags:
   Application: StackManager
   Environment: "{{ Environment }}"
+Variables:
+  EnvironmentCode: d
 Template: integration/template.yaml
 Capabilities:
   - CAPABILITY_NAMED_IAM
 ```
 
 The configuration file makes use of [Jinja2](https://palletsprojects.com/p/jinja/) templating to perform
-replacements into the `StackName`, `Parameters` and `Tags` values using the `Environment` and `Region` values.
+replacements into the `StackName`, `Parameters` and `Tags` values using the `Environment` and `Region` values
+and any values from the `Variables` section.
 
 > It's also possible to make use of Jinja2 filters, for example to lowercase the Environment to pass into a
 > parameter that is going to be used where it's required to be lowercase (e.g. in forming a bucket name):
@@ -48,14 +51,12 @@ replacements into the `StackName`, `Parameters` and `Tags` values using the `Env
 >   LowerEnvironment: "{{ Environment|lower() }}" 
 > ```
 
-_There is not currently support for defining and substituting arbitrary values._
-
 ### Multiple Environments
 
 ```yaml
 ---
 Environment: all
-StackName: "{{ Environment }}-StackManager-Integration-{{ Region }}"
+StackName: "{{ EnvironmentCode }}-StackManager-Integration-{{ Region }}"
 Parameters:
   Environment: "{{ Environment }}"
 Tags:
@@ -65,19 +66,27 @@ Template: integration/template.yaml
 ---
 Environment: dev
 Region: us-east-1
+Variables:
+  EnvironmentCode: d
 ---
 Environment: dev
 Region: us-east-2
+Variables:
+  EnvironmentCode: d
 ---
 Environment: prod
 Region: us-east-1
 Tags:
   CostCenter: 200
+Variables:
+  EnvironmentCode: p
 ---
 Environment: prod
 Region: us-east-2
 Tags:
   CostCenter: 300
+Variables:
+  EnvironmentCode: p
 ```
 
 A multi-environment configuration can be used to combine all the configurations for different versions of a stack
@@ -94,6 +103,7 @@ to repeat values.
 |Region|Yes|No|AWS region (e.g. us-east-1) - not required for the 'all' environment|
 |Parameters|No|Yes|Each parameter value is templated, and parameters are inherited from 'all'|
 |Tags|No|Yes|Each tag value is templated, and tags are inherited from 'all'|
+|Variables|No|No|Values are inherited from all and then substituted into StackName, Parameters and Tags|
 |Capabilities|No|No|List of capabilities (e.g. CAPABILITY_IAM)
 |Template|No|No|Can be supplied on command line, so not required in configuration
 
@@ -117,21 +127,25 @@ Usage: stackmanager deploy [OPTIONS]
   Create or update a CloudFormation stack using ChangeSets.
 
 Options:
-  -p, --profile TEXT              AWS Profile, will use default or environment
-                                  variables if not specified
-
+  -p, --profile TEXT              AWS Profile, will use default or environment variables if not specified
   -c, --config TEXT               YAML Configuration file  [required]
   -e, --environment TEXT          Environment to deploy  [required]
   -r, --region TEXT               AWS Region to deploy  [required]
   -t, --template TEXT             Override template
-  --parameter TEXT...             Override a parameter, can be specified
-                                  multiple times
+  --parameter TEXT...             Override a parameter, can be specified multiple times
   --change-set-name TEXT          Custom ChangeSet name
   --existing-changes [ALLOW|FAILED_ONLY|DISALLOW]
                                   Whether deployment is allowed when there are
                                   existing ChangeSets
   --auto-apply                    Automatically apply created ChangeSet
   --help                          Show this message and exit.
+```
+
+The `--parameter` argument can be supplied multiple times and requires two values (the key and the value),
+for example:
+
+```
+stackmanager deploy --parameter LambdaBucket mybucket --parameter LambdaKey mykey ...
 ```
 
 _(since 0.7.0)_ Existing ChangeSets, if any, will be listed for the stack and depending upon the `--existing-changes`

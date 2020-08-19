@@ -3,7 +3,7 @@ Environment: all
 StackName: "{{ Environment }}-ExampleStack"
 Parameters:
   Environment: "{{ Environment }}"
-  SSMKey: "/Company/{{ Environment }}/{{ Region }}/Key"
+  SSMKey: "/Company/{{ EnvironmentCode }}/{{ Region }}/Key"
 Tags:
   Application: Example
   Environment: "{{ Environment }}"
@@ -16,21 +16,29 @@ Region: us-east-1
 Parameters:
   Domain: dev.example.com
   KeyId: guid1
+Variables:
+  EnvironmentCode: d
 ---
 Environment: dev
 Region: us-east-2
 Parameters:
   Domain: dev.example.com
   KeyId: guid2
+Variables:
+  EnvironmentCode: d
 ---
 Environment: prod
 Region: us-east-1
 Parameters:
   Domain: prod.example.com
   KeyId: guid3
+Variables:
+  EnvironmentCode: p
 ---
 Environment: prod
 Region: us-east-2
 Parameters:
   Domain: prod.example.com
   KeyId: guid4
+Variables:
+  EnvironmentCode: p
