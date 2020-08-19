@@ -1,6 +1,6 @@
 ---
 Environment: all
-StackName: "{{ Environment }}-StackManager-Integration"
+StackName: "{{ EnvironmentCode }}-StackManager-Integration"
 Parameters:
   Environment: "{{ Environment }}"
 Tags:
@@ -10,3 +10,5 @@ Template: integration/template.yaml
 ---
 Environment: dev
 Region: us-east-1
+Variables:
+  EnvironmentCode: d

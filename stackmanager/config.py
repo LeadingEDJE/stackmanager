@@ -14,6 +14,7 @@ CHANGE_SET_NAME = 'ChangeSetName'
 CHANGE_SET_ID = 'ChangeSetId'
 EXISTING_CHANGES = 'ExistingChanges'
 AUTO_APPLY = 'AutoApply'
+VARIABLES = 'Variables'
 
 
 class Config:
@@ -113,6 +114,16 @@ class Config:
 
         return copy if copy else values
 
+    def __get_variables(self):
+        """
+        Get Variables for templating from the Variables section of the config,
+        with the current Environment and Region
+        :return: Variables for templating
+        """
+        variables = self.__get_dict(VARIABLES)
+        variables.update(Environment=self.environment, Region=self.region)
+        return variables
+
     def __template_all(self, values):
         """
         Process dictionary, evaluating all values using Jinja2 templates using
@@ -120,9 +131,10 @@ class Config:
         :param dict values: Dictionary to template
         :return: Updated dictionary
         """
+        variables = self.__get_variables()
         for k, v in values.items():
             template = Template(str(v), optimized=False)
-            values[k] = template.render(Environment=self.environment, Region=self.region)
+            values[k] = template.render(variables)
         return values
 
     @property
@@ -132,7 +144,7 @@ class Config:
         :return: Stack name, evaluated as a Jinja2 template
         """
         template = Template(self.__get_value(STACK_NAME, True))
-        return template.render(Environment=self.environment, Region=self.region)
+        return template.render(self.__get_variables())
 
     @property
     def template(self):

@@ -11,8 +11,10 @@ def all_config():
         'Template': 'template.yaml',
         'Parameters': {
             'Environment': '{{ Environment }}',
-            'Thing': '/Company/{{ Environment }}/{{ Region }}/Thing',
-            'This': 'That'
+            'EnvironmentCode': '{{ EnvironmentCode }}',
+            'This': '/Company/{{ Environment }}/{{ Region }}/This',
+            'That': '/Company/{{ EnvironmentCode}}/That',
+            'Override': 'all-value'
         },
         'Tags': {
             'Team': 'Ops',
@@ -30,8 +32,11 @@ def dev_config(all_config):
         'Environment': 'dev',
         'Region': 'us-east-1',
         'Parameters': {
-            'This': 'TheOther',
-            'Extra': '/Company/{{ Region }}/{{ Environment }}/Extra'
+            'Extra': '/Company/{{ Region }}/{{ Environment }}/Extra',
+            'Override': 'dev-value'
+        },
+        'Variables': {
+            'EnvironmentCode': 'd'
         },
         'Capabilities': [
             'CAPABILITIES_NAMED_IAM'
@@ -77,17 +82,21 @@ def test_capabilities(all_config, dev_config):
 def test_parameters_all(all_config):
     assert all_config.parameters == {
         'Environment': 'all',
-        'Thing': '/Company/all/None/Thing',
-        'This': 'That'
+        'EnvironmentCode': '',
+        'This': '/Company/all/None/This',
+        'That': '/Company//That',
+        'Override': 'all-value'
     }
 
 
 def test_parameters_dev(dev_config):
     assert dev_config.parameters == {
         'Environment': 'dev',
-        'Thing': '/Company/dev/us-east-1/Thing',
-        'This': 'TheOther',
-        'Extra': '/Company/us-east-1/dev/Extra'
+        'EnvironmentCode': 'd',
+        'This': '/Company/dev/us-east-1/This',
+        'That': '/Company/d/That',
+        'Extra': '/Company/us-east-1/dev/Extra',
+        'Override': 'dev-value'
     }
 
 
