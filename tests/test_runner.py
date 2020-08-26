@@ -9,6 +9,9 @@ from stackmanager.status import StackStatus
 from unittest.mock import MagicMock
 
 
+STACK_DOES_NOT_EXIST = ClientError({'Error': {'Code': 'ValidationError'}}, 'describe_stacks')
+
+
 @pytest.fixture
 def config():
     return Config({
@@ -179,7 +182,7 @@ def test_load_stack_pending(config, capsys, monkeypatch):
 
 
 def test_load_stack_does_not_exist(config, capsys):
-    mock = MagicMock(**{'describe_stacks.side_effect': ClientError({}, 'describe_stacks')})
+    mock = MagicMock(**{'describe_stacks.side_effect': STACK_DOES_NOT_EXIST})
     runner = Runner(mock, config)
 
     mock.describe_stacks.assert_called_once_with(StackName='TestStack')
@@ -188,6 +191,14 @@ def test_load_stack_does_not_exist(config, capsys):
 
     captured = capsys.readouterr()
     assert captured.out == '\nStack: TestStack, Status: does not exist\n'
+
+
+def test_load_stack_expired_token(config):
+    ce = ClientError({'Error': {'Code': 'ExpiredToken'}}, 'describe_stacks')
+    mock = MagicMock(**{'describe_stacks.side_effect': ce})
+
+    with pytest.raises(StackError, match='An error occurred \\(ExpiredToken\\).*'):
+        Runner(mock, config)
 
 
 def test_deploy_rollback_complete(client, config):
@@ -435,7 +446,7 @@ def test_reject_delete_stack(client, config, capsys):
 
 
 def test_reject_no_stack(config):
-    attrs = {'describe_stacks.side_effect': ClientError({}, 'describe_stacks')}
+    attrs = {'describe_stacks.side_effect': STACK_DOES_NOT_EXIST}
     mock = MagicMock(**attrs)
     runner = Runner(mock, config)
 
@@ -459,7 +470,7 @@ def test_delete(client, config, capsys):
 
 
 def test_delete_no_stack(config):
-    attrs = {'describe_stacks.side_effect': ClientError({}, 'describe_stacks')}
+    attrs = {'describe_stacks.side_effect': STACK_DOES_NOT_EXIST}
     mock = MagicMock(**attrs)
     runner = Runner(mock, config)
 
@@ -570,7 +581,7 @@ def test_status_no_events(client, config, capsys):
 
 
 def test_status_does_not_exist(config, capsys):
-    mock = MagicMock(**{'describe_stacks.side_effect': ClientError({}, 'describe_stacks')})
+    mock = MagicMock(**{'describe_stacks.side_effect': STACK_DOES_NOT_EXIST})
     runner = Runner(mock, config)
     runner.status(7)
 

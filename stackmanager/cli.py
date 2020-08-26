@@ -150,9 +150,13 @@ def status(ctx, profile, config, environment, region, event_days):
     Print current status of Stack.
     Includes pending ChangeSets and recent events.
     """
-    cfg = load_config(config, environment, region, False)
-    runner = create_runner(profile, cfg)
-    runner.status(event_days)
+    try:
+        cfg = load_config(config, environment, region, False)
+        runner = create_runner(profile, cfg)
+        runner.status(event_days)
+    except (ValidationError, StackError) as e:
+        error(f'\nError: {e}')
+        exit(1)
 
 
 @cli.command(name='build-lambda')
