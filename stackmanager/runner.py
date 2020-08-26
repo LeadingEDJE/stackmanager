@@ -40,9 +40,12 @@ class Runner:
             info(f'\nStack: {self.config.stack_name}, Status: {StackStatus.get_status(stack).name} '
                  f'({self.format_timestamp(stack_timestamp)})')
             return stack
-        except ClientError:
-            info(f'\nStack: {self.config.stack_name}, Status: does not exist')
-            return None
+        except ClientError as ce:
+            if ce.response['Error']['Code'] == 'ValidationError':
+                info(f'\nStack: {self.config.stack_name}, Status: does not exist')
+                return None
+            else:
+                raise StackError(ce)
 
     def check_change_sets(self):
         """
