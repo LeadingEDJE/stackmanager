@@ -33,8 +33,8 @@ def load_config(config_file, environment, region, check_template=True, **kwargs)
             if not env_config:
                 raise ValidationError(f'Environment {environment} for {region} not found in {config_file}')
 
-            env_config.set_parent(all_config)
-            arg_config.set_parent(env_config)
+            env_config.parent = all_config
+            arg_config.parent = env_config
 
             # Validate before returning
             arg_config.validate(check_template)

@@ -33,16 +33,34 @@ class Config:
         :param dict config: Raw Configuration dictionary
         :raises ValidationError: if Environment or Region is missing when required
         """
-        self.parent = None
-        self.config = config
-        self.environment = config.get(ENVIRONMENT)
-        self.region = config.get(REGION)
+        self._config = config
+        self._parent = None
+        self._environment = config.get(ENVIRONMENT)
+        self._region = config.get(REGION)
 
-        if not self.environment:
-            raise ValidationError('Environment is required')
+    @property
+    def environment(self):
+        return self._environment
 
-        if not Config.is_all(self.environment) and not self.region:
-            raise ValidationError('Region is required except for the all config')
+    @environment.setter
+    def environment(self, environment):
+        self._environment = environment
+
+    @property
+    def region(self):
+        return self._region
+
+    @region.setter
+    def region(self, region):
+        self._region = region
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, parent):
+        self._parent = parent
 
     @classmethod
     def is_all(cls, environment):
@@ -62,13 +80,6 @@ class Config:
         """
         return template.startswith('https://')
 
-    def set_parent(self, parent):
-        """
-        Set the parent Config
-        :param Config parent: Parent Config
-        """
-        self.parent = parent
-
     def __get_value(self, name, required=False):
         """
         Get value, checking parent if not set
@@ -77,7 +88,7 @@ class Config:
         :return: Value for name
         :raises ValidationError: If a required value is not available
         """
-        value = self.config.get(name)
+        value = self._config.get(name)
         if not value and self.parent:
             value = self.parent.__get_value(name)
 
@@ -93,7 +104,7 @@ class Config:
         :param list default: Default to return if not set
         :return: Value or default
         """
-        values = self.config.get(name)
+        values = self._config.get(name)
         if not values and self.parent:
             values = self.parent.__get_list(name, None)
 
@@ -107,7 +118,7 @@ class Config:
         :return: Merged values, or empty dictionary
         """
         copy = None
-        values = self.config.get(name, {})
+        values = self._config.get(name, {})
         if self.parent:
             copy = self.parent.__get_dict(name).copy()
             copy.update(values)
@@ -163,6 +174,16 @@ class Config:
         """
         return self.__template_all(self.__get_dict(PARAMETERS))
 
+    def add_parameters(self, parameters):
+        """
+        Add dynamic parameters to the underlying configuration
+        :param parameters: Parameters to add, can be a dictionary or tuples
+        """
+        if PARAMETERS in self._config:
+            self._config[PARAMETERS].update(dict(parameters))
+        else:
+            self._config[PARAMETERS] = dict(parameters)
+
     @property
     def tags(self):
         """
@@ -203,6 +224,10 @@ class Config:
         :param bool check_template: If True and template is not URL, check on filesystem
         :raises ValidationError: If Config is not valid
         """
+        if not self.environment:
+            raise ValidationError('Environment is required')
+        if not Config.is_all(self.environment) and not self.region:
+            raise ValidationError('Region is required except for the all config')
         if not self.stack_name:
             raise ValidationError('StackName not set')
         if check_template and not self.template:
