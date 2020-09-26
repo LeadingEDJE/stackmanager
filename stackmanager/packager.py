@@ -75,6 +75,7 @@ def build_lambda(source_dir, output_dir, runtime, archive_name):
     :param output_dir: Output Directory
     :param runtime: Lambda Runtime
     :param archive_name: Archive name (optional)
+    :return: Path to generated zip file
     """
     config = get_config(runtime, source_dir)
     builder = LambdaBuilder(config.language, config.dependency_manager, None)
@@ -89,5 +90,6 @@ def build_lambda(source_dir, output_dir, runtime, archive_name):
                 builder.build(source_dir, artifacts_dir, scratch_dir, manifest_path, runtime)
                 zip_file = make_archive(os.path.join(output_dir, archive_name), 'zip', artifacts_dir)
                 info(f'\nBuilt Lambda Archive {zip_file}')
+                return zip_file
             except LambdaBuilderError as e:
                 raise PackagingError(e)

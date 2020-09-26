@@ -2,7 +2,6 @@ import os
 from stackmanager.exceptions import ValidationError
 from jinja2 import Template
 
-
 ENVIRONMENT = 'Environment'
 REGION = 'Region'
 STACK_NAME = 'StackName'
@@ -33,16 +32,36 @@ class Config:
         :param dict config: Raw Configuration dictionary
         :raises ValidationError: if Environment or Region is missing when required
         """
-        self.parent = None
-        self.config = config
-        self.environment = config.get(ENVIRONMENT)
-        self.region = config.get(REGION)
+        self._config = config
+        self._parent = None
+        self._environment = config.get(ENVIRONMENT)
+        self._region = config.get(REGION)
 
-        if not self.environment:
-            raise ValidationError('Environment is required')
+    @property
+    def environment(self):
+        return self._environment
 
-        if not Config.is_all(self.environment) and not self.region:
-            raise ValidationError('Region is required except for the all config')
+    @environment.setter
+    def environment(self, environment):
+        self._environment = environment
+        self._config[ENVIRONMENT] = environment
+
+    @property
+    def region(self):
+        return self._region
+
+    @region.setter
+    def region(self, region):
+        self._region = region
+        self._config[REGION] = region
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, parent):
+        self._parent = parent
 
     @classmethod
     def is_all(cls, environment):
@@ -62,13 +81,6 @@ class Config:
         """
         return template.startswith('https://')
 
-    def set_parent(self, parent):
-        """
-        Set the parent Config
-        :param Config parent: Parent Config
-        """
-        self.parent = parent
-
     def __get_value(self, name, required=False):
         """
         Get value, checking parent if not set
@@ -77,7 +89,7 @@ class Config:
         :return: Value for name
         :raises ValidationError: If a required value is not available
         """
-        value = self.config.get(name)
+        value = self._config.get(name)
         if not value and self.parent:
             value = self.parent.__get_value(name)
 
@@ -93,7 +105,7 @@ class Config:
         :param list default: Default to return if not set
         :return: Value or default
         """
-        values = self.config.get(name)
+        values = self._config.get(name)
         if not values and self.parent:
             values = self.parent.__get_list(name, None)
 
@@ -107,7 +119,7 @@ class Config:
         :return: Merged values, or empty dictionary
         """
         copy = None
-        values = self.config.get(name, {})
+        values = self._config.get(name, {})
         if self.parent:
             copy = self.parent.__get_dict(name).copy()
             copy.update(values)
@@ -154,6 +166,14 @@ class Config:
         """
         return self.__get_value(TEMPLATE, True)
 
+    @template.setter
+    def template(self, template):
+        """
+        Set Template
+        :param str template: Template path or URL
+        """
+        self._config[TEMPLATE] = template
+
     @property
     def parameters(self):
         """
@@ -162,6 +182,16 @@ class Config:
         :return: Parameters dictionary
         """
         return self.__template_all(self.__get_dict(PARAMETERS))
+
+    def add_parameters(self, parameters):
+        """
+        Add dynamic parameters to the underlying configuration
+        :param parameters: Parameters to add, can be a dictionary or tuples
+        """
+        if PARAMETERS in self._config:
+            self._config[PARAMETERS].update(dict(parameters))
+        else:
+            self._config[PARAMETERS] = dict(parameters)
 
     @property
     def tags(self):
@@ -184,17 +214,33 @@ class Config:
     def change_set_name(self):
         return self.__get_value(CHANGE_SET_NAME, False)
 
+    @change_set_name.setter
+    def change_set_name(self, change_set_name):
+        self._config[CHANGE_SET_NAME] = change_set_name
+
     @property
     def change_set_id(self):
         return self.__get_value(CHANGE_SET_ID, False)
+
+    @change_set_id.setter
+    def change_set_id(self, change_set_id):
+        self._config[CHANGE_SET_ID] = change_set_id
 
     @property
     def existing_changes(self):
         return self.__get_value(EXISTING_CHANGES, False) or 'ALLOW'
 
+    @existing_changes.setter
+    def existing_changes(self, existing_changes):
+        self._config[EXISTING_CHANGES] = existing_changes
+
     @property
     def auto_apply(self):
         return self.__get_value(AUTO_APPLY, False) or False
+
+    @auto_apply.setter
+    def auto_apply(self, auto_apply):
+        self._config[AUTO_APPLY] = auto_apply
 
     def validate(self, check_template=True):
         """
@@ -203,6 +249,10 @@ class Config:
         :param bool check_template: If True and template is not URL, check on filesystem
         :raises ValidationError: If Config is not valid
         """
+        if not self.environment:
+            raise ValidationError('Environment is required')
+        if not Config.is_all(self.environment) and not self.region:
+            raise ValidationError('Region is required except for the all config')
         if not self.stack_name:
             raise ValidationError('StackName not set')
         if check_template and not self.template:
@@ -210,3 +260,13 @@ class Config:
         if check_template and not Config.is_template_url(self.template):
             if not os.path.isfile(self.template):
                 raise ValidationError(f'Template {self.template} not found')
+
+    def __eq__(self, other):
+        """
+        Test for Equality
+        :param Config other: Other Config object
+        """
+        return self._config == other._config \
+            and self.environment == other.environment \
+            and self.region == other.region \
+            and self.parent == other.parent

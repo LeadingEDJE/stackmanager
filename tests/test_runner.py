@@ -233,7 +233,7 @@ def test_deploy_invalid_status(client, config):
 
 
 def test_deploy_disallow_existing_changes(client, config):
-    config.config['ExistingChanges'] = 'DISALLOW'
+    config._config['ExistingChanges'] = 'DISALLOW'
 
     runner = Runner(client, config)
     with pytest.raises(ValidationError, match='Creation of new ChangeSet not allowed when existing ChangeSets found'):
@@ -243,7 +243,7 @@ def test_deploy_disallow_existing_changes(client, config):
 
 
 def test_deploy_failed_only_existing_changes(client, config):
-    config.config['ExistingChanges'] = 'FAILED_ONLY'
+    config._config['ExistingChanges'] = 'FAILED_ONLY'
 
     runner = Runner(client, config)
     with pytest.raises(ValidationError,

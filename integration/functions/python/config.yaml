@@ -1,0 +1,16 @@
+---
+Environment: all
+StackName: "{{ EnvironmentCode }}-StackManager-PythonFunction"
+Parameters:
+  Environment: "{{ Environment }}"
+Tags:
+  Application: StackManager
+  Environment: "{{ Environment }}"
+Template: integration/functions/python/template.yaml
+Capabilities:
+  - CAPABILITY_IAM
+---
+Environment: dev
+Region: us-east-1
+Variables:
+  EnvironmentCode: d

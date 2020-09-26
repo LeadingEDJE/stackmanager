@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion : "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: StackManager test template that Python Lambda function
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+  LambdaBucket:
+    Description: Lambda Bucket
+    Type: String
+  LambdaKey:
+    Description: Lambda Key
+    Type: String
+
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri:
+        Bucket: !Ref LambdaBucket
+        Key: !Ref LambdaKey
+      Environment:
+        Variables:
+          Environment: !Ref Environment
+      Handler: app.lambda_handler
+      Runtime: python3.7
+
+Outputs:
+  FunctionArn:
+    Description: Function ARN
+    Value: !GetAtt Function.Arn

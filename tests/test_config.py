@@ -45,7 +45,7 @@ def dev_config(all_config):
             'CostCenter': 200
         }
     })
-    config.set_parent(all_config)
+    config.parent = all_config
     return config
 
 
