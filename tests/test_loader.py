@@ -1,5 +1,6 @@
 import pytest
 import os
+from stackmanager.config import Config
 from stackmanager.exceptions import ValidationError
 from stackmanager.loader import load_config
 
@@ -9,7 +10,7 @@ def config_file(filename='config.yaml'):
 
 
 def test_loader_dev():
-    config = load_config(config_file(), 'dev', 'us-east-1', False)
+    config = load_config(config_file(), Config({'Region': 'us-east-1'}), 'dev', False)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
@@ -28,7 +29,7 @@ def test_loader_dev():
 
 
 def test_loader_prod():
-    config = load_config(config_file(), 'prod', 'us-east-2', False)
+    config = load_config(config_file(), Config({'Region': 'us-east-2'}), 'prod', False)
 
     assert config.environment == 'prod'
     assert config.region == 'us-east-2'
@@ -50,10 +51,19 @@ def test_loader_dev_overrides():
     override_parameters = [
         ('SSMKey', '/Other/{{ Environment }}/Key'),
         ('Domain', 'notdev.example.com'),
-        ('Extra', 'OverrideDefault')
+        ('Extra', 'OverrideDefault'),
+        ('LambdaKey', 'd/e/f')
     ]
-    config = load_config(config_file(), 'dev', 'us-east-1', False, Template='integration/config.yaml',
-                         Parameters=override_parameters, ChangeSetName='TestChangeSet', AutoApply=True)
+
+    arg_config = Config({})
+    arg_config.region = 'us-east-1'
+    arg_config.add_parameters({
+        'LambdaBucket': 'mybucket',
+        'LambdaKey': 'a/b/c'
+    })
+    config = load_config(config_file(), arg_config, 'dev', False,
+                         Template='integration/config.yaml', Parameters=override_parameters,
+                         ChangeSetName='TestChangeSet', AutoApply=True)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
@@ -63,7 +73,9 @@ def test_loader_dev_overrides():
         'SSMKey': '/Other/dev/Key',
         'Domain': 'notdev.example.com',
         'KeyId': 'guid1',
-        'Extra': 'OverrideDefault'
+        'Extra': 'OverrideDefault',
+        'LambdaBucket': 'mybucket',
+        'LambdaKey': 'd/e/f'
     }
     assert config.change_set_name == 'TestChangeSet'
     assert config.auto_apply is True
@@ -71,9 +83,9 @@ def test_loader_dev_overrides():
 
 def test_loader_missing_environment():
     with pytest.raises(ValidationError, match='Environment test for us-east-1 not found in .*'):
-        load_config(config_file(), 'test', 'us-east-1')
+        load_config(config_file(), Config({'Region': 'us-east-1'}), 'test')
 
 
 def test_loader_missing_region():
     with pytest.raises(ValidationError, match='Environment dev for us-west-1 not found in .*'):
-        load_config(config_file(), 'dev', 'us-west-1')
+        load_config(config_file(), Config({'Region': 'us-west-1'}), 'dev')

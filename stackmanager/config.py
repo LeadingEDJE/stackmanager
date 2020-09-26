@@ -165,6 +165,14 @@ class Config:
         """
         return self.__get_value(TEMPLATE, True)
 
+    @template.setter
+    def template(self, template):
+        """
+        Set Template
+        :param str template: Template path or URL
+        """
+        self._config[TEMPLATE] = template
+
     @property
     def parameters(self):
         """
@@ -205,17 +213,33 @@ class Config:
     def change_set_name(self):
         return self.__get_value(CHANGE_SET_NAME, False)
 
+    @change_set_name.setter
+    def change_set_name(self, change_set_name):
+        self._config[CHANGE_SET_NAME] = change_set_name
+
     @property
     def change_set_id(self):
         return self.__get_value(CHANGE_SET_ID, False)
+
+    @change_set_id.setter
+    def change_set_id(self, change_set_id):
+        self._config[CHANGE_SET_ID] = change_set_id
 
     @property
     def existing_changes(self):
         return self.__get_value(EXISTING_CHANGES, False) or 'ALLOW'
 
+    @existing_changes.setter
+    def existing_changes(self, existing_changes):
+        self._config[EXISTING_CHANGES] = existing_changes
+
     @property
     def auto_apply(self):
         return self.__get_value(AUTO_APPLY, False) or False
+
+    @auto_apply.setter
+    def auto_apply(self, auto_apply):
+        self._config[AUTO_APPLY] = auto_apply
 
     def validate(self, check_template=True):
         """
