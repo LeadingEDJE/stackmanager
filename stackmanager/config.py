@@ -2,7 +2,6 @@ import os
 from stackmanager.exceptions import ValidationError
 from jinja2 import Template
 
-
 ENVIRONMENT = 'Environment'
 REGION = 'Region'
 STACK_NAME = 'StackName'
@@ -45,6 +44,7 @@ class Config:
     @environment.setter
     def environment(self, environment):
         self._environment = environment
+        self._config[ENVIRONMENT] = environment
 
     @property
     def region(self):
@@ -53,6 +53,7 @@ class Config:
     @region.setter
     def region(self, region):
         self._region = region
+        self._config[REGION] = region
 
     @property
     def parent(self):
@@ -259,3 +260,13 @@ class Config:
         if check_template and not Config.is_template_url(self.template):
             if not os.path.isfile(self.template):
                 raise ValidationError(f'Template {self.template} not found')
+
+    def __eq__(self, other):
+        """
+        Test for Equality
+        :param Config other: Other Config object
+        """
+        return self._config == other._config \
+            and self.environment == other.environment \
+            and self.region == other.region \
+            and self.parent == other.parent

@@ -1,6 +1,5 @@
 from .exceptions import ValidationError
-from .config import Config, ENVIRONMENT, REGION, TEMPLATE, PARAMETERS, CHANGE_SET_NAME, CHANGE_SET_ID, \
-    EXISTING_CHANGES, AUTO_APPLY
+from .config import Config, TEMPLATE, PARAMETERS, CHANGE_SET_NAME, CHANGE_SET_ID, EXISTING_CHANGES, AUTO_APPLY
 import yaml
 
 
