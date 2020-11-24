@@ -1,4 +1,16 @@
 import click
+import tabulate
+
+
+TABLE_FORMAT = 'simple'
+
+
+def echo(message):
+    """
+    Print message without coloring
+    :param str message: Message
+    """
+    click.echo(message)
 
 
 def info(message):
@@ -22,4 +34,8 @@ def error(message):
     Print error level message in bold red
     :param str message: Message
     """
-    click.secho(message, fg='red', bold=True)
+    click.secho(message, fg='red', bold=True, err=True)
+
+
+def table(data, headers):
+    click.echo(tabulate.tabulate(data, headers=headers, tablefmt=TABLE_FORMAT))

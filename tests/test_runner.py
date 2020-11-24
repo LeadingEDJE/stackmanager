@@ -40,7 +40,8 @@ def create_complete_stack():
             'StackName': 'TestStack',
             'StackStatus': StackStatus.CREATE_COMPLETE.name,
             'CreationTime': datetime(2019, 12, 31, 18, 29, 53, 64136, tzinfo=timezone.utc),
-            'LastUpdatedTime': datetime(2019, 12, 31, 18, 30, 11, 12345, tzinfo=timezone.utc)
+            'LastUpdatedTime': datetime(2019, 12, 31, 18, 30, 11, 12345, tzinfo=timezone.utc),
+            'Outputs': [{'OutputKey': 'TestOutputKey', 'OutputValue': 'TestOutputValue'}]
         }]
     }
 
@@ -145,24 +146,15 @@ def client(create_complete_stack, single_successful_changeset, describe_changese
 # Runner tests
 ###################################################
 
-def test_load_stack(client, config, capsys, monkeypatch):
-    # Prevent differences in format depending upon where this runs
-    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
-
+def test_load_stack(client, config):
     runner = Runner(client, config)
 
     client.describe_stacks.assert_called_once_with(StackName='TestStack')
     assert runner.stack is not None
     assert runner.change_set_name == 'TestChangeSet'
 
-    captured = capsys.readouterr()
-    assert captured.out == '\nStack: TestStack, Status: CREATE_COMPLETE (2019-12-31 18:30:11)\n'
 
-
-def test_load_stack_pending(config, capsys, monkeypatch):
-    # Prevent differences in format depending upon where this runs
-    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
-
+def test_load_stack_pending(config):
     describe_stacks = {
         'Stacks': [{
             'StackName': 'TestStack',
@@ -177,20 +169,14 @@ def test_load_stack_pending(config, capsys, monkeypatch):
     mock.describe_stacks.assert_called_once_with(StackName='TestStack')
     assert runner.stack is not None
 
-    captured = capsys.readouterr()
-    assert captured.out == '\nStack: TestStack, Status: REVIEW_IN_PROGRESS (2019-12-31 18:29:53)\n'
 
-
-def test_load_stack_does_not_exist(config, capsys):
+def test_load_stack_does_not_exist(config):
     mock = MagicMock(**{'describe_stacks.side_effect': STACK_DOES_NOT_EXIST})
     runner = Runner(mock, config)
 
     mock.describe_stacks.assert_called_once_with(StackName='TestStack')
     assert runner.stack is None
     assert runner.change_set_name == 'TestChangeSet'
-
-    captured = capsys.readouterr()
-    assert captured.out == '\nStack: TestStack, Status: does not exist\n'
 
 
 def test_load_stack_expired_token(config):
@@ -199,6 +185,46 @@ def test_load_stack_expired_token(config):
 
     with pytest.raises(StackError, match='An error occurred \\(ExpiredToken\\).*'):
         Runner(mock, config)
+
+
+def test_print_stack_status_create_complete(client, config, monkeypatch, capsys):
+    # Prevent differences in format depending upon where this runs
+    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
+
+    runner = Runner(client, config)
+    runner.print_stack_status()
+
+    captured = capsys.readouterr()
+    assert captured.out == '\nStack: TestStack, Status: CREATE_COMPLETE (2019-12-31 18:30:11)\n'
+
+
+def test_print_stack_status_pending(config, monkeypatch, capsys):
+    # Prevent differences in format depending upon where this runs
+    monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
+
+    describe_stacks = {
+        'Stacks': [{
+            'StackName': 'TestStack',
+            'StackStatus': StackStatus.REVIEW_IN_PROGRESS.name,
+            'CreationTime': datetime(2019, 12, 31, 18, 29, 53, 64136, tzinfo=timezone.utc)
+        }]
+    }
+
+    mock = MagicMock(**{'describe_stacks.return_value': describe_stacks})
+    runner = Runner(mock, config)
+    runner.print_stack_status()
+
+    captured = capsys.readouterr()
+    assert captured.out == '\nStack: TestStack, Status: REVIEW_IN_PROGRESS (2019-12-31 18:29:53)\n'
+
+
+def test_print_stack_status_does_not_exist(config, capsys):
+    mock = MagicMock(**{'describe_stacks.side_effect': STACK_DOES_NOT_EXIST})
+    runner = Runner(mock, config)
+    runner.print_stack_status()
+
+    captured = capsys.readouterr()
+    assert captured.out == '\nStack: TestStack, Status: does not exist\n'
 
 
 def test_deploy_rollback_complete(client, config):
@@ -328,12 +354,12 @@ def test_deploy_waiter_failed(client, config):
         runner.deploy()
 
 
-def test_execute_change_set(client, config, capsys, monkeypatch):
+def test_apply_change_set(client, config, capsys, monkeypatch):
     # Prevent differences in format depending upon where this runs
     monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
 
     runner = Runner(client, config)
-    runner.execute_change_set()
+    runner.apply_change_set()
 
     client.describe_stack_events.assert_called_once_with(StackName='TestStack')
     client.get_waiter.assert_called_once_with('stack_update_complete')
@@ -357,14 +383,14 @@ def test_execute_change_set(client, config, capsys, monkeypatch):
     assert 'AWS::CloudFormation::Stack  CREATE_COMPLETE' not in captured.out
 
 
-def test_execute_change_set_client_error(client, config):
+def test_apply_change_set_client_error(client, config):
     client.configure_mock(**{'execute_change_set.side_effect': ClientError({}, 'execute_change_set')})
     runner = Runner(client, config)
     with pytest.raises(StackError, match='An error occurred \\(Unknown\\) when calling the execute_change_set .*'):
-        runner.execute_change_set()
+        runner.apply_change_set()
 
 
-def test_execute_change_set_waiter_error(client, config, capsys, monkeypatch):
+def test_apply_change_set_waiter_error(client, config, capsys, monkeypatch):
     # Prevent differences in format depending upon where this runs
     monkeypatch.setenv('STACKMANAGER_TIMEZONE', 'UTC')
 
@@ -407,10 +433,10 @@ def test_execute_change_set_waiter_error(client, config, capsys, monkeypatch):
 
     runner = Runner(client, config)
     with pytest.raises(StackError, match='Waiter stack_update_complete failed: Update Failed'):
-        runner.execute_change_set()
+        runner.apply_change_set()
 
     captured = capsys.readouterr()
-    assert 'ChangeSet TestChangeSet for TestStack failed:' in captured.out
+    assert 'ChangeSet TestChangeSet for TestStack failed:' in captured.err
     assert '2020-01-01 13:33:41  Queue                AWS::SQS::Queue  CREATE_FAILED     Something went wrong' \
            in captured.out
 
@@ -547,7 +573,7 @@ def test_delete_waiter_error(client, config, capsys, monkeypatch):
         runner.delete()
 
     captured = capsys.readouterr()
-    assert 'Deletion of Stack TestStack failed:' in captured.out
+    assert 'Deletion of Stack TestStack failed:' in captured.err
     assert '2020-01-01 13:35:11  Topic                AWS::SNS::Topic  DELETE_FAILED     Something went wrong' \
            in captured.out
 
@@ -587,6 +613,19 @@ def test_status_does_not_exist(config, capsys):
 
     captured = capsys.readouterr()
     assert captured.out == '\nStack: TestStack, Status: does not exist\n'
+
+
+def test_get_output(client, config):
+    runner = Runner(client, config)
+
+    assert runner.get_output('TestOutputKey') == 'TestOutputValue'
+
+
+def test_get_output_not_found(client, config):
+    runner = Runner(client, config)
+
+    with pytest.raises(ValidationError, match='Output OtherKey not found'):
+        runner.get_output('OtherKey')
 
 
 ###################################################
@@ -631,7 +670,7 @@ def test_az_deploy_no_changes(client, config, capsys):
     assert '##vso[task.complete result=SucceededWithIssues]DONE' in captured.out
 
 
-def test_az_execute_change_set_waiter_error(client, config, capsys):
+def test_az_apply_change_set_waiter_error(client, config, capsys):
     # Configure waiter to throw WaiterError
     waiter_error = WaiterError('stack_update_complete',
                                'Update Failed',
@@ -641,7 +680,7 @@ def test_az_execute_change_set_waiter_error(client, config, capsys):
 
     runner = AzureDevOpsRunner(client, config)
     with pytest.raises(StackError, match='Waiter stack_update_complete failed: Update Failed'):
-        runner.execute_change_set()
+        runner.apply_change_set()
 
     captured = capsys.readouterr()
     assert '##vso[task.logissue type=error]TestStack (test/us-east-1) - ChangeSet TestChangeSet failed' in captured.out

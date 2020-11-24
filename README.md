@@ -116,6 +116,7 @@ Stackmanager has the following commands:
 * [`reject`](#reject) - Reject a previously created ChangeSet
 * [`delete`](#delete) - Delete an existing CloudFormation stack
 * [`status`](#status) - Print current status of Stack
+* [`get-output`](#get-output) - Get Stack Output value
 * [`upload`](#upload) - Uploads a local file to S3. Utility method to prevent the need to use the AWS CLI or other tools.
 * [`build-lambda`](#build-lambda) - Build a Lambda zip file using aws-lambda-builders.
 
@@ -134,6 +135,7 @@ Commands:
   build-lambda  Build a Lambda function zip file.
   delete        Delete a CloudFormation stack.
   deploy        Create or update a CloudFormation stack using ChangeSets.
+  get-output    Returns matching Output value if it exists.
   reject        Reject a CloudFormation ChangeSet, deleting the stack if in REVIEW_IN_PROGRESS status and has no other ChangeSets.
   status        Print current status of Stack.
   upload        Uploads a File to S3.
@@ -237,6 +239,35 @@ Options:
   -r, --region TEXT        AWS Region to deploy  [required]
   --retain-resources TEXT  Logical Ids of resources to retain
   --help                   Show this message and exit.
+```
+
+### get-output
+
+Sometimes it's necessary to get an output value from a stack to pass to something else.
+While SSM parameter store or CloudFormation exports are a preferred way to pass values between stacks, this can be used
+to pass a value from one stackmanager execution to another (e.g. when they are in different regions):
+
+```
+myoutput=$(stackmanger get-output -e dev -r us-east-1 -c mystack.yml -o OutputKey)
+```
+
+The output value will be the only value written to stdout.
+
+If the stack does not exist, or a matching output does not exist an error will be printed to stderr and the return
+code will be -1.
+
+```
+Usage: stackmanager get-output [OPTIONS]
+
+  Returns matching Output value if it exists.
+
+Options:
+  -p, --profile TEXT      AWS Profile, will use default or environment variables if not specified
+  -c, --config-file TEXT  YAML Configuration file  [required]
+  -e, --environment TEXT  Environment to deploy  [required]
+  -r, --region TEXT       AWS Region to deploy
+  -o, --output-key TEXT   Output Key  [required]
+  --help                  Show this message and exit.
 ```
 
 ### status

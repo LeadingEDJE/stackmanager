@@ -1,8 +1,4 @@
 import pytest
-import stackmanager.loader
-import stackmanager.packager
-import stackmanager.runner
-import stackmanager.uploader
 from click.testing import CliRunner
 from stackmanager.cli import cli
 from stackmanager.config import Config
@@ -44,7 +40,7 @@ def test_apply_change_set_name(config):
             load_config.assert_called_once_with('config.yml', Config({'Region': 'us-east-1'}), 'env', False,
                                                 ChangeSetName='testchangeset')
             create_runner.assert_called_once_with('dev', config)
-            create_runner.return_value.execute_change_set.assert_called_once()
+            create_runner.return_value.apply_change_set.assert_called_once()
 
 
 def test_apply_change_set_id(config):
@@ -56,7 +52,7 @@ def test_apply_change_set_id(config):
 
             assert result.exit_code == 0
             create_changeset_runner.assert_called_once_with('dev', 'us-east-1', 'id123')
-            create_changeset_runner.return_value.execute_change_set.assert_called_once()
+            create_changeset_runner.return_value.apply_change_set.assert_called_once()
 
 
 def test_reject_change_set_name(config):
@@ -111,6 +107,24 @@ def test_status(config):
             load_config.assert_called_once_with('config.yml', Config({'Region': 'us-east-1'}), 'env', False)
             create_runner.assert_called_once_with('dev', config)
             create_runner.return_value.status.assert_called_once_with(7)
+
+
+def test_get_output(config):
+    with patch('stackmanager.cli.load_config') as load_config:
+        load_config.return_value = config
+        with patch('stackmanager.cli.create_runner') as create_runner:
+            create_runner.return_value.configure_mock(**{'get_output.return_value': 'TestOutputValue'})
+
+            cli_runner = CliRunner()
+            result = cli_runner.invoke(cli, ['-p', 'dev', 'get-output', '-r', 'us-east-1', '-e', 'env', '-c',
+                                             'config.yml', '-o', 'TestOutputKey'])
+
+            assert result.exit_code == 0
+            load_config.assert_called_once_with('config.yml', Config({'Region': 'us-east-1'}), 'env', False)
+            create_runner.assert_called_once_with('dev', config)
+            create_runner.return_value.get_output.assert_called_once_with('TestOutputKey')
+
+            assert result.output == 'TestOutputValue\n'
 
 
 def test_build_lambda():
