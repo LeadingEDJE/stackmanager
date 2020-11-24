@@ -6,12 +6,12 @@ from functools import update_wrapper
 from stackmanager.config import Config
 from stackmanager.exceptions import PackagingError, StackError, TransferError, ValidationError
 from stackmanager.loader import load_config
-from stackmanager.messages import error
+from stackmanager.messages import echo, error
 from stackmanager.runner import create_runner, create_changeset_runner
 from stackmanager.uploader import create_uploader
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(level=logging.WARN, format="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 
 class Context:
@@ -117,7 +117,7 @@ def apply(ctx, profile, config_file, environment, region, change_set_name, chang
     try:
         if change_set_id:
             runner = create_changeset_runner(profile, region, change_set_id)
-            runner.execute_change_set()
+            runner.apply_change_set()
         else:
             if not config_file:
                 raise click.UsageError("Missing option '-c' / '--config-file'.")
@@ -126,7 +126,7 @@ def apply(ctx, profile, config_file, environment, region, change_set_name, chang
 
             cfg = load_config(config_file, ctx.obj.config, environment, False, ChangeSetName=change_set_name)
             runner = create_runner(profile, cfg)
-            runner.execute_change_set()
+            runner.apply_change_set()
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
         exit(1)
@@ -203,6 +203,27 @@ def status(ctx, profile, config_file, environment, region, event_days):
         cfg = load_config(config_file, ctx.obj.config, environment, False)
         runner = create_runner(profile, cfg)
         runner.status(event_days)
+    except (ValidationError, StackError) as e:
+        error(f'\nError: {e}')
+        exit(1)
+
+
+@cli.command()
+@pass_merged_context
+@click.option('-p', '--profile', help='AWS Profile, will use default or environment variables if not specified')
+@click.option('-c', '--config-file', required=True, help='YAML Configuration file')
+@click.option('-e', '--environment', required=True, help='Environment to deploy')
+@click.option('-r', '--region', callback=require_region, help='AWS Region to deploy')
+@click.option('-o', '--output-key', required=True, help='Output Key')
+def get_output(ctx, profile, config_file, environment, region, output_key):
+    """
+    Returns matching Output value if it exists.
+    """
+    try:
+        cfg = load_config(config_file, ctx.obj.config, environment, False)
+        runner = create_runner(profile, cfg)
+        output_value = runner.get_output(output_key)
+        echo(output_value)
     except (ValidationError, StackError) as e:
         error(f'\nError: {e}')
         exit(1)
