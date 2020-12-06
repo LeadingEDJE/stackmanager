@@ -41,7 +41,8 @@ def create_complete_stack():
             'StackStatus': StackStatus.CREATE_COMPLETE.name,
             'CreationTime': datetime(2019, 12, 31, 18, 29, 53, 64136, tzinfo=timezone.utc),
             'LastUpdatedTime': datetime(2019, 12, 31, 18, 30, 11, 12345, tzinfo=timezone.utc),
-            'Outputs': [{'OutputKey': 'TestOutputKey', 'OutputValue': 'TestOutputValue'}]
+            'Outputs': [{'OutputKey': 'TestOutputKey', 'OutputValue': 'TestOutputValue'}],
+            'EnableTerminationProtection': True
         }]
     }
 
@@ -328,9 +329,42 @@ def test_deploy_no_changes(client, config, capsys):
     client.create_change_set.assert_called_once()
     client.get_waiter.assert_called_once_with('change_set_create_complete')
     client.describe_change_set.assert_not_called()
+    client.update_termination_protection.assert_not_called()
 
     captured = capsys.readouterr()
     assert 'No changes to Stack TestStack' in captured.out
+
+
+def test_deploy_no_changes_enable_termination_protection(client, config, capsys):
+    describe_stacks = {
+        'Stacks': [{
+            'StackName': 'TestStack',
+            'StackStatus': StackStatus.CREATE_COMPLETE.name,
+            'CreationTime': '2019-12-31T18:30:11.12345+0000',
+            'EnableTerminationProtection': False
+        }]
+    }
+    # Configure waiter to throw WaiterError for FAILURE due to no changes
+    waiter_error = WaiterError('change_set_create_complete',
+                               'No Changes',
+                               {'Status': 'FAILED', 'StatusReason': 'No updates are to be performed'})
+    waiter_mock = MagicMock(**{'wait.side_effect': waiter_error})
+    client.configure_mock(**{'get_waiter.return_value': waiter_mock, 'describe_stacks.return_value': describe_stacks})
+
+    runner = Runner(client, config)
+    runner.deploy()
+
+    client.list_change_sets.assert_called_once_with(StackName='TestStack')
+    client.create_change_set.assert_called_once()
+    client.get_waiter.assert_called_once_with('change_set_create_complete')
+    client.describe_change_set.assert_not_called()
+
+    client.update_termination_protection.assert_called_once_with(StackName='TestStack',
+                                                                 EnableTerminationProtection=True)
+
+    captured = capsys.readouterr()
+    assert 'No changes to Stack TestStack' in captured.out
+    assert 'Enabled Termination Protection' in captured.out
 
 
 def test_deploy_client_error(client, config):
@@ -369,6 +403,7 @@ def test_apply_change_set(client, config, capsys, monkeypatch):
     )
     client.get_paginator.assert_called_once_with('describe_stack_events')
     client.get_paginator().paginate.assert_called_once_with(StackName='TestStack')
+    client.update_termination_protection.assert_not_called()
 
     captured = capsys.readouterr()
 

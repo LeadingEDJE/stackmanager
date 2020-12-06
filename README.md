@@ -106,6 +106,10 @@ to repeat values.
 |Variables|No|No|Values are inherited from all and then substituted into StackName, Parameters and Tags|
 |Capabilities|No|No|List of capabilities (e.g. CAPABILITY_IAM)
 |Template|No|No|Can be supplied on command line, so not required in configuration
+|TerminationProtection|No|No|Termination Protection defaults to True|
+
+> In `1.2.0`, Termination Protection support was added and defaults to True, set to False in config.yml to disable.
+> When deleting a stack using stackmanager, termination protection will be automatically disabled.
 
 ## Usage
 
@@ -238,8 +242,12 @@ Options:
   -e, --environment TEXT   Environment to deploy  [required]
   -r, --region TEXT        AWS Region to deploy  [required]
   --retain-resources TEXT  Logical Ids of resources to retain
+  -Y, --yes                Confirm the action without prompting.
   --help                   Show this message and exit.
 ```
+
+> Since `1.2.0` deletion requires a confirmation, either interactively or by supplying the `-Y`/`--yes` option.
+> Deletion also now automatically removes termination protection (the logic being that you've confirmed you want to delete).
 
 ### get-output
 

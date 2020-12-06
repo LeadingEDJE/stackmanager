@@ -14,6 +14,7 @@ CHANGE_SET_ID = 'ChangeSetId'
 EXISTING_CHANGES = 'ExistingChanges'
 AUTO_APPLY = 'AutoApply'
 VARIABLES = 'Variables'
+TERMINATION_PROTECTION = 'TerminationProtection'
 
 
 class Config:
@@ -90,10 +91,10 @@ class Config:
         :raises ValidationError: If a required value is not available
         """
         value = self._config.get(name)
-        if not value and self.parent:
+        if value is None and self.parent:
             value = self.parent.__get_value(name)
 
-        if required and not value:
+        if required and value is None:
             raise ValidationError(f'{name} not set')
 
         return value
@@ -241,6 +242,15 @@ class Config:
     @auto_apply.setter
     def auto_apply(self, auto_apply):
         self._config[AUTO_APPLY] = auto_apply
+
+    @property
+    def termination_protection(self):
+        """
+        Termination Protection for the stack, defaults to True
+        :return bool:
+        """
+        value = self.__get_value(TERMINATION_PROTECTION, False)
+        return True if value is None else bool(value)
 
     def validate(self, check_template=True):
         """

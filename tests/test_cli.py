@@ -87,7 +87,8 @@ def test_delete(config):
         load_config.return_value = config
         with patch('stackmanager.cli.create_runner') as create_runner:
             cli_runner = CliRunner()
-            result = cli_runner.invoke(cli, ['-r', 'us-east-1', 'delete', '-p', 'dev', '-e', 'env', '-c', 'config.yml'])
+            result = cli_runner.invoke(cli, ['-r', 'us-east-1', 'delete', '--yes', '-p', 'dev', '-e', 'env',
+                                             '-c', 'config.yml'])
 
             assert result.exit_code == 0
             load_config.assert_called_once_with('config.yml', Config({'Region': 'us-east-1'}), 'env', False)
