@@ -174,6 +174,7 @@ def reject(ctx, profile, config_file, environment, region, change_set_name, chan
 @click.option('-e', '--environment', required=True, help='Environment to deploy')
 @click.option('-r', '--region', callback=require_region, help='AWS Region to deploy')
 @click.option('--retain-resources', multiple=True, help='Logical Ids of resources to retain')
+@click.confirmation_option('-Y', '--yes', prompt='Delete CloudFormation Stack?')
 def delete(ctx, profile, config_file, environment, region, retain_resources):
     """
     Delete a CloudFormation stack.

@@ -57,6 +57,9 @@ class Runner:
                     self.execute_change_set()
                 else:
                     self.pending_change_set(change_set_id)
+            else:
+                # Will update Termination protection if there are no other changes
+                self.update_termination_protection()
         except ClientError as ce:
             raise StackError(ce)
 
@@ -107,6 +110,8 @@ class Runner:
         if not StackStatus.is_deletable(self.stack):
             raise ValidationError(f'Stack {self.config.stack_name} is not in a deletable status: '
                                   f'{StackStatus.get_status(self.stack).name}')
+
+        self.update_termination_protection(deleting=True)
 
         info(f'\nDeleting Stack {self.config.stack_name}')
         last_timestamp = self.get_last_timestamp()
@@ -268,6 +273,7 @@ class Runner:
             self.print_events(last_timestamp)
 
             self.stack = self.load_stack()
+            self.update_termination_protection()
             self.print_outputs()
 
         except ClientError as ce:
@@ -275,6 +281,15 @@ class Runner:
         except WaiterError as we:
             self.failed_change_set(last_timestamp)
             raise StackError(we)
+
+    def update_termination_protection(self, deleting=False):
+        protect = False if deleting else self.config.termination_protection
+        current = False if not self.stack else self.stack.get('EnableTerminationProtection', False)
+
+        if protect is not current:
+            self.client.update_termination_protection(StackName=self.config.stack_name,
+                                                      EnableTerminationProtection=protect)
+            info(f'\n{"Enabled" if protect else "Disabled"} Termination Protection')
 
     def failed_change_set(self, last_timestamp):
         """

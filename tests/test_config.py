@@ -150,6 +150,32 @@ def test_auto_apply_default():
     assert config.auto_apply is False
 
 
+def test_termination_protection_false():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'TerminationProtection': False
+    })
+    assert config.termination_protection is False
+
+
+def test_termination_protection_true():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1',
+        'TerminationProtection': True
+    })
+    assert config.termination_protection is True
+
+
+def test_termination_protection_default():
+    config = Config({
+        'Environment': 'dev',
+        'Region': 'us-east-1'
+    })
+    assert config.termination_protection is True
+
+
 def test_validate_config_with_template_file():
     config = Config({
         'Environment': 'dev',
