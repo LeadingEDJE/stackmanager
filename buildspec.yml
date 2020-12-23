@@ -3,6 +3,9 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      - which aws
+      - pip list
+      - echo $PATH
       - echo Installing AWS CLI V2
       - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
       - unzip -q awscliv2.zip
