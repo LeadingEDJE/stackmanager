@@ -15,7 +15,7 @@ phases:
       - aws ecr-public get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin public.ecr.aws
   build:
     commands:
-      - VERSION=$(basename $CODEBUILD_SOURCE_VERSION)
+      - VERSION=$(git describe --tags --abbrev=0)
       - echo "Version $VERSION"
       - docker build --build-arg version=$VERSION -t $IMAGE_REPO_NAME:$VERSION .
   post_build:
