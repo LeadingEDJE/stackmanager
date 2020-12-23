@@ -1,0 +1,24 @@
+# CodeBuild build spec used to push a containerized version of stackmanager to a public ECR repository.
+# This is done from CodeBuild rather than a GitHub action because it avoids the need to add AWS credentials to GitHub.
+# Builds are triggered by WebHook in GitHub
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Installing AWS CLI V2
+      - pip uninstall -y awscli
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip -q awscliv2.zip
+      - ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
+      - echo Logging in to Amazon ECR...
+      - aws ecr-public get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin public.ecr.aws
+  build:
+    commands:
+      - VERSION=$(basename $CODEBUILD_SOURCE_VERSION)
+      - echo "Version $VERSION"
+      - docker build --build-arg version=$VERSION -t $IMAGE_REPO_NAME:$VERSION .
+  post_build:
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $IMAGE_REPO_NAME:$VERSION
