@@ -2,6 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/stackmanager.svg)](https://badge.fury.io/py/stackmanager)
 [![Coverage Status](https://coveralls.io/repos/github/LeadingEDJE/stackmanager/badge.svg?branch=master)](https://coveralls.io/github/LeadingEDJE/stackmanager?branch=master)
+[![Docker Images](https://img.shields.io/static/v1?label=docker&message=Amazon%20ECR%20Public%20Gallery&color=blue&logo=docker&style=flat)](https://gallery.ecr.aws/leadingedje/stackmanager)
 
 Utility to manage CloudFormation stacks based upon a Template (either local or in S3) and a YAML configuration file.
 
@@ -11,6 +12,12 @@ applied or applied later (e.g. during a later phase of a build pipeline after re
 > There are also some utility methods for building a lambda file zip and uploading files to S3.
 > These are to provide some of the AWS SAM CLI functionality while fitting into the workflow and configuration
 > style of stackmanager.
+
+## Installation
+
+stackmanager is available as a [Python package](https://pypi.org/project/stackmanager) or a [Docker image](https://gallery.ecr.aws/leadingedje/stackmanager) based upon Debian.
+
+The Docker image can be used to run container jobs in Azure DevOps pipelines and potentially other CI/CD products.
 
 ## Configuration
 
