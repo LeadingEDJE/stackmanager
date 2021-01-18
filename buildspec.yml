@@ -13,7 +13,12 @@ phases:
       - VERSION=$(git describe --tags)
       - echo "Version $VERSION"
       - docker build --build-arg version=$VERSION -t $IMAGE_REPO_NAME:$VERSION .
+      - MINOR=${VERSION%.*}
+      - MAJOR=${MINOR%.*}
+      - docker tag $IMAGE_REPO_NAME:$VERSION $IMAGE_REPO_NAME:$MINOR
+      - docker tag $IMAGE_REPO_NAME:$VERSION $IMAGE_REPO_NAME:$MAJOR
+      - docker tag $IMAGE_REPO_NAME:$VERSION $IMAGE_REPO_NAME:latest
   post_build:
     commands:
       - echo Pushing the Docker image...
-      - docker push $IMAGE_REPO_NAME:$VERSION
+      - docker push --all-tags $IMAGE_REPO_NAME
