@@ -21,4 +21,7 @@ phases:
   post_build:
     commands:
       - echo Pushing the Docker image...
-      - docker push --all-tags $IMAGE_REPO_NAME
+      - docker push $IMAGE_REPO_NAME:$VERSION
+      - docker push $IMAGE_REPO_NAME:$MINOR
+      - docker push $IMAGE_REPO_NAME:$MAJOR
+      - docker push $IMAGE_REPO_NAME:latest
