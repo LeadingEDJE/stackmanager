@@ -3,7 +3,7 @@ import boto3
 import os
 import uuid
 from botocore.exceptions import ClientError, WaiterError
-from stackmanager.config import Config
+from stackmanager.config import Config, USE_PREVIOUS_VALUE
 from stackmanager.exceptions import StackError, ValidationError
 from stackmanager.messages import echo, info, warn, error, table
 from stackmanager.status import StackStatus
@@ -360,17 +360,21 @@ class Runner:
 
     def build_parameters(self):
         """
-        Converts Parameters dictionary into ParameterKey/ParameterValue pairs
+        Converts Parameters dictionary into ParameterKey/ParameterValue pairs.
+        Supports UsePreviousValue if value is <<UsePreviousValue>> constant,
         :return: Parameters dictionary
         """
-        return [({'ParameterKey': k, 'ParameterValue': v}) for k, v in self.config.parameters.items()]
+        return [{'ParameterKey': k, 'UsePreviousValue': True}
+                if v == USE_PREVIOUS_VALUE else
+                {'ParameterKey': k, 'ParameterValue': v}
+                for k, v in self.config.parameters.items()]
 
     def build_tags(self):
         """
         Converts Tags dictionary into Key/Value pairs
         :return: Tags dictionary
         """
-        return [({'Key': k, 'Value': v}) for k, v in self.config.tags.items()]
+        return [{'Key': k, 'Value': v} for k, v in self.config.tags.items()]
 
     def format_timestamp(self, timestamp):
         """

@@ -1,5 +1,6 @@
 from .exceptions import ValidationError
-from .config import Config, TEMPLATE, PARAMETERS, CHANGE_SET_NAME, CHANGE_SET_ID, EXISTING_CHANGES, AUTO_APPLY
+from .config import Config, TEMPLATE, PREVIOUS_PARAMETERS, PARAMETERS, USE_PREVIOUS_VALUE, CHANGE_SET_NAME, \
+    CHANGE_SET_ID, EXISTING_CHANGES, AUTO_APPLY
 import yaml
 
 
@@ -54,6 +55,9 @@ def populate_arg_config(arg_config, environment, kwargs):
 
     if TEMPLATE in kwargs:
         arg_config.template = kwargs[TEMPLATE]
+    if PREVIOUS_PARAMETERS in kwargs:
+        previous = {p: USE_PREVIOUS_VALUE for p in kwargs[PREVIOUS_PARAMETERS]}
+        arg_config.add_parameters(previous)
     if PARAMETERS in kwargs:
         arg_config.add_parameters(kwargs[PARAMETERS])
     if CHANGE_SET_NAME in kwargs:

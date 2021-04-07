@@ -48,12 +48,13 @@ def test_loader_prod():
 
 
 def test_loader_dev_overrides():
-    override_parameters = [
+    previous_parameters = ('Previous', 'LambdaKey')
+    override_parameters = (
         ('SSMKey', '/Other/{{ Environment }}/Key'),
         ('Domain', 'notdev.example.com'),
         ('Extra', 'OverrideDefault'),
         ('LambdaKey', 'd/e/f')
-    ]
+    )
 
     arg_config = Config({})
     arg_config.region = 'us-east-1'
@@ -63,7 +64,7 @@ def test_loader_dev_overrides():
     })
     config = load_config(config_file(), arg_config, 'dev', False,
                          Template='integration/config.yaml', Parameters=override_parameters,
-                         ChangeSetName='TestChangeSet', AutoApply=True)
+                         PreviousParameters=previous_parameters, ChangeSetName='TestChangeSet', AutoApply=True)
 
     assert config.environment == 'dev'
     assert config.region == 'us-east-1'
@@ -75,7 +76,8 @@ def test_loader_dev_overrides():
         'KeyId': 'guid1',
         'Extra': 'OverrideDefault',
         'LambdaBucket': 'mybucket',
-        'LambdaKey': 'd/e/f'
+        'LambdaKey': 'd/e/f',
+        'Previous': '<<UsePreviousValue>>'
     }
     assert config.change_set_name == 'TestChangeSet'
     assert config.auto_apply is True

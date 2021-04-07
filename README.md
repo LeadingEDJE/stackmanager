@@ -175,6 +175,7 @@ Options:
   -r, --region TEXT               AWS Region to deploy  [required]
   -t, --template TEXT             Override template
   --parameter TEXT...             Override a parameter, can be specified multiple times
+  --parameter-use-previous TEXT   Use previous value for a parameter, can be specified multiple times
   --change-set-name TEXT          Custom ChangeSet name
   --existing-changes [ALLOW|FAILED_ONLY|DISALLOW]
                                   Whether deployment is allowed when there are
@@ -190,7 +191,14 @@ for example:
 stackmanager deploy --parameter LambdaBucket mybucket --parameter LambdaKey mykey ...
 ```
 
-_(since 0.7.0)_ Existing ChangeSets, if any, will be listed for the stack and depending upon the `--existing-changes`
+The `--parameter-use-previous` argument can be supplied multiple times and requires one value (the name of the parameter),
+and is typically used when a previous run has supplied a `--parameter` argument either as an override or for a value
+not included in the configuration.
+
+> If `--parameter` and `--parameter-use-previous` are specified for the same parameter name, the `--parameter`
+> value will be used. 
+
+Existing ChangeSets, if any, will be listed for the stack and depending upon the `--existing-changes`
 value (which defaults to `ALLOW`) this may prevent the deployment. If set to `FAILED_ONLY` then failed ChangeSets
 will not prevent a new change from being created, but if set to `DISALLOW` any existing ChangeSets will prevent new
 changes.

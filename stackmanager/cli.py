@@ -78,18 +78,20 @@ def cli(ctx, profile, region):
 @click.option('-r', '--region', callback=require_region, help='AWS Region to deploy')
 @click.option('-t', '--template', help='Override template')
 @click.option('--parameter', nargs=2, multiple=True, help='Override a parameter, can be specified multiple times')
+@click.option('--parameter-use-previous', multiple=True, help='Use previous value for a parameter, can be specified multiple times')
 @click.option('--change-set-name', help='Custom ChangeSet name')
 @click.option('--existing-changes', type=click.Choice(['ALLOW', 'FAILED_ONLY', 'DISALLOW'], case_sensitive=False),
               default='ALLOW', help='Whether deployment is allowed when there are existing ChangeSets')
 @click.option('--auto-apply', is_flag=True, help='Automatically apply created ChangeSet')
-def deploy(ctx, profile, config_file, environment, region, template, parameter, change_set_name, existing_changes,
-           auto_apply):
+def deploy(ctx, profile, config_file, environment, region, template, parameter, parameter_use_previous, change_set_name,
+           existing_changes, auto_apply):
     """
     Create or update a CloudFormation stack using ChangeSets.
     """
     try:
         cfg = load_config(config_file, ctx.obj.config, environment, Template=template, Parameters=parameter,
-                          ChangeSetName=change_set_name, ExistingChanges=existing_changes, AutoApply=auto_apply)
+                          PreviousParameters=parameter_use_previous, ChangeSetName=change_set_name,
+                          ExistingChanges=existing_changes, AutoApply=auto_apply)
         runner = create_runner(profile, cfg)
         runner.deploy()
     except (ValidationError, StackError) as e:

@@ -2,7 +2,7 @@ import os
 import pytest
 from botocore.exceptions import ClientError, WaiterError
 from datetime import datetime, timezone
-from stackmanager.config import Config
+from stackmanager.config import Config, USE_PREVIOUS_VALUE
 from stackmanager.exceptions import StackError, ValidationError
 from stackmanager.runner import AzureDevOpsRunner, Runner
 from stackmanager.status import StackStatus
@@ -19,7 +19,8 @@ def config():
         'Environment': 'test',
         'Region': 'us-east-1',
         'Parameters': {
-            'Param1': 'Value1'
+            'Param1': 'Value1',
+            'Param2': USE_PREVIOUS_VALUE
         },
         'Tags': {
             'Tag1': 'Value1'
@@ -292,7 +293,8 @@ def test_deploy(client, config, capsys, monkeypatch):
         StackName='TestStack',
         ChangeSetName='TestChangeSet',
         ChangeSetType='UPDATE',
-        Parameters=[{'ParameterKey': 'Param1', 'ParameterValue': 'Value1'}],
+        Parameters=[{'ParameterKey': 'Param1', 'ParameterValue': 'Value1'},
+                    {'ParameterKey': 'Param2', 'UsePreviousValue': True}],
         Tags=[{'Key': 'Tag1', 'Value': 'Value1'}],
         Capabilities=['CAPABILITY_IAM'],
         TemplateBody='AWSTemplateFormatVersion : "2010-09-09"'
