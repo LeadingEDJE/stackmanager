@@ -16,14 +16,15 @@ def test_deploy(config):
         with patch('stackmanager.cli.create_runner') as create_runner:
             cli_runner = CliRunner()
             result = cli_runner.invoke(cli, ['deploy', '-p', 'dev', '-r', 'us-east-1', '-e', 'env', '-c', 'config.yml',
-                                             '-t', 'template.yml', '--parameter', 'foo', 'bar', '--change-set-name',
+                                             '-t', 'template.yml', '--parameter', 'foo', 'bar',
+                                             '--parameter-use-previous', 'keep', '--change-set-name',
                                              'testchangeset', '--auto-apply'])
 
             assert result.exit_code == 0
             load_config.assert_called_once_with('config.yml', Config({'Region': 'us-east-1'}), 'env',
                                                 Template='template.yml', Parameters=(('foo', 'bar'),),
-                                                ChangeSetName='testchangeset', ExistingChanges='ALLOW',
-                                                AutoApply=True)
+                                                PreviousParameters=('keep',), ChangeSetName='testchangeset',
+                                                ExistingChanges='ALLOW', AutoApply=True)
             create_runner.assert_called_once_with('dev', config)
             create_runner.return_value.deploy.assert_called_once()
 
@@ -175,7 +176,7 @@ def test_chained_commands(config):
                     create_uploader.assert_called_once_with('dev', 'us-east-1')
                     create_uploader.return_value.upload.assert_called_once_with('src.zip', 'bucket', 'key')
                     load_config.assert_called_once_with('config.yml', arg_config, 'env',
-                                                        Template=None, Parameters=(), ChangeSetName=None,
-                                                        ExistingChanges='ALLOW', AutoApply=False)
+                                                        Template=None, Parameters=(), PreviousParameters=(),
+                                                        ChangeSetName=None, ExistingChanges='ALLOW', AutoApply=False)
                     create_runner.assert_called_once_with('dev', config)
                     create_runner.return_value.deploy.assert_called_once()
