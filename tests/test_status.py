@@ -26,3 +26,13 @@ def test_is_creatable():
     assert StackStatus.is_creatable(None)
     assert StackStatus.is_creatable({STACK_STATUS: StackStatus.REVIEW_IN_PROGRESS.name})
     assert not StackStatus.is_creatable({STACK_STATUS: StackStatus.CREATE_COMPLETE.name})
+
+
+def test_is_updatable():
+    assert StackStatus.is_updatable({STACK_STATUS: StackStatus.CREATE_COMPLETE.name})
+    assert StackStatus.is_updatable({STACK_STATUS: StackStatus.UPDATE_COMPLETE.name})
+    assert StackStatus.is_updatable({STACK_STATUS: StackStatus.UPDATE_ROLLBACK_COMPLETE.name})
+    assert StackStatus.is_updatable({STACK_STATUS: StackStatus.IMPORT_COMPLETE.name})
+    assert StackStatus.is_updatable({STACK_STATUS: StackStatus.IMPORT_ROLLBACK_COMPLETE.name})
+
+    assert not StackStatus.is_updatable({STACK_STATUS: StackStatus.UPDATE_IN_PROGRESS.name})

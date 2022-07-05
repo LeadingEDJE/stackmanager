@@ -22,6 +22,11 @@ class StackStatus(Enum):
     UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS = auto()
     UPDATE_ROLLBACK_FAILED = auto()
     UPDATE_ROLLBACK_IN_PROGRESS = auto()
+    IMPORT_IN_PROGRESS = auto()
+    IMPORT_COMPLETE = auto()
+    IMPORT_ROLLBACK_IN_PROGRESS = auto()
+    IMPORT_ROLLBACK_FAILED = auto()
+    IMPORT_ROLLBACK_COMPLETE = auto()
 
     @classmethod
     def get_status(cls, stack):
@@ -46,7 +51,9 @@ class StackStatus(Enum):
                                 StackStatus.UPDATE_IN_PROGRESS,
                                 StackStatus.UPDATE_COMPLETE_CLEANUP_IN_PROGRESS,
                                 StackStatus.UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS,
-                                StackStatus.UPDATE_ROLLBACK_IN_PROGRESS]
+                                StackStatus.UPDATE_ROLLBACK_IN_PROGRESS,
+                                StackStatus.IMPORT_IN_PROGRESS,
+                                StackStatus.IMPORT_ROLLBACK_IN_PROGRESS]
 
     @classmethod
     def is_deletable(cls, stack):
@@ -63,4 +70,6 @@ class StackStatus(Enum):
         stack_status = StackStatus.get_status(stack)
         return stack_status in [StackStatus.CREATE_COMPLETE,
                                 StackStatus.UPDATE_COMPLETE,
-                                StackStatus.UPDATE_ROLLBACK_COMPLETE]
+                                StackStatus.UPDATE_ROLLBACK_COMPLETE,
+                                StackStatus.IMPORT_COMPLETE,
+                                StackStatus.IMPORT_ROLLBACK_COMPLETE]
