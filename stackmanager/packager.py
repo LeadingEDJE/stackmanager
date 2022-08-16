@@ -20,18 +20,19 @@ DOTNET_CLIPACKAGE_CONFIG = CONFIG(language='dotnet', dependency_manager='cli-pac
 GO_MOD_CONFIG = CONFIG(language='go', dependency_manager='modules', manifest_name='go.mod')
 
 RUNTIMES = {
-    'python2.7': PYTHON_PIP_CONFIG,
     'python3.6': PYTHON_PIP_CONFIG,
     'python3.7': PYTHON_PIP_CONFIG,
     'python3.8': PYTHON_PIP_CONFIG,
-    'dotnetcore2.1': DOTNET_CLIPACKAGE_CONFIG,
+    'python3.9': PYTHON_PIP_CONFIG,
     'dotnetcore3.1': DOTNET_CLIPACKAGE_CONFIG,
-    'nodejs10.x': NODEJS_NPM_CONFIG,
+    'dotnet6': DOTNET_CLIPACKAGE_CONFIG,
     'nodejs12.x': NODEJS_NPM_CONFIG,
-    'ruby2.5': RUBY_BUNDLER_CONFIG,
+    'nodejs14.x': NODEJS_NPM_CONFIG,
+    'nodejs16.x': NODEJS_NPM_CONFIG,
     'ruby2.7': RUBY_BUNDLER_CONFIG,
     'go1.x': GO_MOD_CONFIG,
     'java8': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
+    'java8.al2': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
     'java11': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG]
 }
 
