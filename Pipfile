@@ -11,7 +11,7 @@ coveralls = "*"
 
 [packages]
 boto3 = "*"
-pyyaml = "*"
+pyyaml = ">=6.0.1"
 tabulate = "*"
 click = "*"
 jinja2 = "*"
@@ -19,4 +19,4 @@ aws-lambda-builders = ">=1.30.0"
 arrow = "*"
 
 [requires]
-python_version = "3"
+python_version = "3.12"
