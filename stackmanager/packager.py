@@ -19,24 +19,29 @@ JAVA_MAVEN_CONFIG = CONFIG(language='java', dependency_manager='maven', manifest
 DOTNET_CLIPACKAGE_CONFIG = CONFIG(language='dotnet', dependency_manager='cli-package', manifest_name='.csproj')
 GO_MOD_CONFIG = CONFIG(language='go', dependency_manager='modules', manifest_name='go.mod')
 
-RUNTIMES = {
-    'python3.6': PYTHON_PIP_CONFIG,
-    'python3.7': PYTHON_PIP_CONFIG,
-    'python3.8': PYTHON_PIP_CONFIG,
+RUNTIMES = {    
     'python3.9': PYTHON_PIP_CONFIG,
     'python3.10': PYTHON_PIP_CONFIG,
+    'python3.11': PYTHON_PIP_CONFIG,
+    'python3.12': PYTHON_PIP_CONFIG,
+    'python3.13': PYTHON_PIP_CONFIG,
+    'python3.14': PYTHON_PIP_CONFIG,
     'dotnetcore3.1': DOTNET_CLIPACKAGE_CONFIG,
-    'dotnet6': DOTNET_CLIPACKAGE_CONFIG,
-    'nodejs12.x': NODEJS_NPM_CONFIG,
-    'nodejs14.x': NODEJS_NPM_CONFIG,
-    'nodejs16.x': NODEJS_NPM_CONFIG,
-    'nodejs18.x': NODEJS_NPM_CONFIG,
-    'ruby2.7': RUBY_BUNDLER_CONFIG,
-    'go1.x': GO_MOD_CONFIG,
-    'java8': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
+    'dotnet8': DOTNET_CLIPACKAGE_CONFIG,
+    'dotnet9': DOTNET_CLIPACKAGE_CONFIG,
+    'nodejs20.x': NODEJS_NPM_CONFIG,
+    'nodejs22.x': NODEJS_NPM_CONFIG,
+    'nodejs24.x': NODEJS_NPM_CONFIG,
+    'ruby3.2': RUBY_BUNDLER_CONFIG,
+    'ruby3.3': RUBY_BUNDLER_CONFIG,
+    'ruby3.4': RUBY_BUNDLER_CONFIG,
+    'provided.al2': GO_MOD_CONFIG,
+    'provided.al2023': GO_MOD_CONFIG,
     'java8.al2': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
     'java11': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
-    'java17': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG]
+    'java17': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
+    'java21': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG],
+    'java25': [JAVA_MAVEN_CONFIG, JAVA_GRADLE_CONFIG, JAVA_KOTLIN_GRADLE_CONFIG]
 }
 
 # Configure logging for aws_lambda_builders
