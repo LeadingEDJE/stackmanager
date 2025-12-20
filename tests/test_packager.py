@@ -10,7 +10,7 @@ functions_dir = os.path.join(os.path.dirname(__file__), '..', 'integration', 'fu
 
 
 def test_get_config_single():
-    config = stackmanager.packager.get_config('python3.8', os.path.join(functions_dir, 'python'))
+    config = stackmanager.packager.get_config('python3.11', os.path.join(functions_dir, 'python'))
     assert config == stackmanager.packager.PYTHON_PIP_CONFIG
 
 
@@ -38,10 +38,10 @@ def test_build_lambda(capsys, monkeypatch):
     monkeypatch.setattr(LambdaBuilder, 'build', build)
 
     with tempfile.TemporaryDirectory() as output_dir:
-        stackmanager.packager.build_lambda(os.path.join(functions_dir, 'python'), output_dir, 'python3.8', 'test')
+        stackmanager.packager.build_lambda(os.path.join(functions_dir, 'python'), output_dir, 'python3.11', 'test')
 
         assert os.path.isfile(os.path.join(output_dir, 'test.zip'))
 
     captured = capsys.readouterr()
-    assert 'Building python3.8 Lambda function from' in captured.out
+    assert 'Building python3.11 Lambda function from' in captured.out
     assert 'Built Lambda Archive' in captured.out
